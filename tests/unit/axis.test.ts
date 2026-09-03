@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
-import { positionToValue, resolve, resolveAxis } from '../../src/axis'
+import {
+  engineRange,
+  engineToPosition,
+  isEmptyAxis,
+  placeStops,
+  positionToEngine,
+  positionToValue,
+  resolve,
+  resolveAxis,
+} from '../../src/axis'
 
 const moods = ['angry', 'meh', 'wow', 'ugh', 'okay', 'blush'].map((value) => ({ value }))
 
@@ -332,5 +341,141 @@ describe('review findings', () => {
     const axis = resolveAxis({ stops: [{ value: 'a' }, { label: 'nameless' }] })
 
     expect(axis.diagnostics).toEqual([{ code: 'ordinal-stop-without-value', index: 1 }])
+  })
+})
+
+describe('the engine coordinate space', () => {
+  // The interaction engine is a native range input, so it can only hold
+  // numbers. These are the two functions that let the component drive it
+  // without ever asking which kind of axis it has (ADR-0001).
+
+  it('counts stops on an ordinal axis, so one arrow key is exactly one stop', () => {
+    expect(engineRange(resolveAxis({ stops: moods }))).toEqual({ min: 0, max: 5, step: 1 })
+  })
+
+  it('is the range itself on a numeric axis', () => {
+    expect(engineRange(resolveAxis({ min: 20, max: 80, step: 4 }))).toEqual({
+      min: 20,
+      max: 80,
+      step: 4,
+    })
+  })
+
+  it('collapses to a single point when there is nowhere to travel', () => {
+    expect(engineRange(resolveAxis({ stops: [{ value: 'only' }] }))).toEqual({
+      min: 0,
+      max: 0,
+      step: 1,
+    })
+    expect(engineRange(resolveAxis({ stops: [] }))).toEqual({ min: 0, max: 0, step: 1 })
+  })
+
+  it('round-trips every stop position through the engine unchanged', () => {
+    const axis = resolveAxis({ stops: moods })
+
+    for (const stop of moods) {
+      const position = resolve(axis, stop.value).position
+      expect(engineToPosition(axis, positionToEngine(axis, position))).toBe(position)
+    }
+  })
+
+  it('lands an ordinal position on a whole stop index', () => {
+    const axis = resolveAxis({ stops: moods })
+
+    expect(positionToEngine(axis, 0)).toBe(0)
+    expect(positionToEngine(axis, 0.43)).toBe(2)
+    expect(positionToEngine(axis, 1)).toBe(5)
+  })
+
+  it('snaps an off-grid numeric value onto the engine grid', () => {
+    const axis = resolveAxis({ min: 0, max: 100, step: 5 })
+
+    // A step-5 input cannot hold 43; the browser's own value sanitiser would
+    // move it to 45. The presentation layer follows the engine rather than
+    // disagreeing with it (ADR-0001).
+    expect(positionToEngine(axis, resolve(axis, 43).position)).toBe(45)
+  })
+
+  it('cannot put the engine past the last whole step, exactly as the browser cannot', () => {
+    const axis = resolveAxis({ min: 0, max: 10, step: 4 })
+
+    expect(positionToEngine(axis, 1)).toBe(8)
+  })
+
+  it('clamps a position or an engine value that runs past either end', () => {
+    const axis = resolveAxis({ min: 0, max: 100, step: 5 })
+
+    expect(positionToEngine(axis, -1)).toBe(0)
+    expect(positionToEngine(axis, 2)).toBe(100)
+    expect(engineToPosition(axis, -50)).toBe(0)
+    expect(engineToPosition(axis, 500)).toBe(1)
+  })
+
+  it('reads a zero-width engine range as the start rather than dividing by zero', () => {
+    expect(engineToPosition(resolveAxis({ stops: [{ value: 'only' }] }), 0)).toBe(0)
+  })
+})
+
+describe('placeStops', () => {
+  it('hands back every ordinal stop with the position it occupies', () => {
+    const axis = resolveAxis({ stops: [{ value: 'a' }, { value: 'b' }, { value: 'c' }] })
+
+    expect(placeStops(axis)).toEqual([
+      { stop: { value: 'a' }, index: 0, position: 0 },
+      { stop: { value: 'b' }, index: 1, position: 0.5 },
+      { stop: { value: 'c' }, index: 2, position: 1 },
+    ])
+  })
+
+  it('places a numeric tick where its `at` falls in the range', () => {
+    const axis = resolveAxis({ min: 0, max: 200, stops: [{ at: 50 }] })
+
+    expect(placeStops(axis)).toEqual([{ stop: { at: 50 }, index: 0, position: 0.25 }])
+  })
+})
+
+describe('isEmptyAxis', () => {
+  it('is true only when there is nothing at all to choose from', () => {
+    expect(isEmptyAxis(resolveAxis({}))).toBe(true)
+    expect(isEmptyAxis(resolveAxis({ stops: [] }))).toBe(true)
+    expect(isEmptyAxis(resolveAxis({ stops: moods }))).toBe(false)
+
+    // A numeric axis spans a range whether or not anyone pinned a tick to it.
+    expect(isEmptyAxis(resolveAxis({ min: 0, max: 10 }))).toBe(false)
+  })
+})
+
+describe('a numeric value the engine could never hold', () => {
+  const axis = resolveAxis({ min: 0, max: 100, step: 5 })
+
+  it('is reported rather than rewritten', () => {
+    const off = resolve(axis, 43)
+
+    // The value stays the consumer's. Issue 03 settled that the component does
+    // not correct it either, because emitting a correction would be emitting on
+    // a prop change (ADR-0003) - so the complaint is the only way to find out.
+    expect(off.value).toBe(43)
+    expect(off.diagnostics).toEqual([{ code: 'value-off-step' }])
+  })
+
+  it('says nothing about a value that is on the grid', () => {
+    expect(resolve(axis, 45).diagnostics).toEqual([])
+  })
+
+  it('complains only once about a value that is both off-grid and out of range', () => {
+    expect(resolve(axis, 143).diagnostics).toEqual([{ code: 'value-out-of-range' }])
+  })
+})
+
+describe('narrowing the axis', () => {
+  it('promises a number once the axis is known to be numeric', () => {
+    const axis = resolveAxis({ min: 0, max: 100, step: 5 })
+    if (axis.kind !== 'numeric') throw new Error('expected a numeric axis')
+
+    // The annotation is the assertion: before the overload this needed a cast,
+    // because the generic could not know a numeric axis carries numbers.
+    const value: number = positionToValue(axis, 0.43)
+
+    expect(value).toBe(45)
   })
 })

@@ -191,7 +191,7 @@ Public API; renaming one is a breaking change (ADR-0004).
 
 **States** `--ranger-unset-track-color` `--ranger-unset-opacity` `--ranger-disabled-opacity` `--ranger-transition`
 
-**Set by the component, read-only for consumers** `--ranger-position` (0–1) `--ranger-stop-count` `--ranger-active-color`
+**Set by the component, read-only for consumers** `--ranger-position` (0–1) `--ranger-stop-position` (0–1, per stop marker) `--ranger-stop-count` `--ranger-active-color`
 
 Root data attributes for state-based styling: `data-axis`, `data-size`, `data-unset`, `data-disabled`, `data-readonly`, `data-dragging`.
 
@@ -244,7 +244,7 @@ Changesets for versioning and notes. GitHub Actions (GitHub only, no other forge
 | --------------------------------------------- | ------------------------------------ | --------------- |
 | [01](./issues/01-repo-scaffolding.md)         | Repo scaffolding and build pipeline  | ready-for-agent |
 | [02](./issues/02-axis-core.md)                | Axis core: DOM-free value logic      | ready-for-agent |
-| [03](./issues/03-component-shell.md)          | Component shell: engine + presentation | ready-for-agent |
+| [03](./issues/03-component-shell.md)          | Component shell: engine + presentation | resolved        |
 | [04](./issues/04-gradient-system.md)          | Gradient system and thumb tinting    | ready-for-agent |
 | [05](./issues/05-labels-icons-slots.md)       | Labels, icons and the stop slot      | ready-for-agent |
 | [06](./issues/06-accessibility.md)            | Accessibility to WCAG 2.2 AA         | ready-for-agent |

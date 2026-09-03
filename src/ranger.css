@@ -2,22 +2,146 @@
  * Plain CSS. No preprocessor, ever — see ADR-0004 under docs/adr/.
  *
  * Two rules this file lives under:
- *   1. Every visual value comes from a `--ranger-*` token (issue 08). Tokens are
- *      public API, so none get declared until something reads them.
+ *   1. Every visual value comes from a `--ranger-*` token. Tokens are public
+ *      API, so this file only ever *reads* them — with an inline fallback, so a
+ *      Ranger looks like something before issue 08 declares the surface and the
+ *      size scale on the root.
  *   2. Logical properties only. No `left`, `right`, `margin-left`, ... so that
  *      RTL works today and vertical stays cheap.
  *
- * This is a placeholder; the real stylesheet arrives with issues 03 and 08.
- * The engine becomes `opacity: 0` in issue 03, once there is a presentation
- * layer to look at — until then it stays visible so the playground shows
- * something.
+ * Colour, gradients and the thumb tint are issue 04's; the label and icon rows
+ * that sit above and below the control are issue 05's.
  */
 
 .ranger {
   display: block;
   inline-size: 100%;
+  font-family: var(--ranger-font, inherit);
 }
 
+/*
+ * The track area, and the only part of a Ranger the engine covers: labels and
+ * icons will sit outside it, where they need their own click handling.
+ */
+.ranger__control {
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-block-size: var(--ranger-thumb-size, 1.25rem);
+}
+
+.ranger__track {
+  block-size: var(--ranger-track-height, 0.5rem);
+  border-radius: var(--ranger-track-radius, 999px);
+  background: var(--ranger-track-color, #e5e5e5);
+  overflow: hidden;
+}
+
+.ranger__fill {
+  block-size: 100%;
+  inline-size: calc(var(--ranger-position, 0) * 100%);
+  background: var(--ranger-active-color, #525252);
+}
+
+.ranger__stops {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * Markers travel on the same inset path as the thumb, so a tick and the thumb
+ * that lands on it line up exactly. The marker size stays a literal `calc` on
+ * the track height rather than a `--ranger-*` name: a token is public API, and
+ * this is an internal proportion nobody should be pinning to (ADR-0004).
+ */
+.ranger__stop {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(
+    var(--ranger-thumb-size, 1.25rem) / 2 + var(--ranger-stop-position, 0) *
+      (100% - var(--ranger-thumb-size, 1.25rem))
+  );
+  inline-size: calc(var(--ranger-track-height, 0.5rem) / 2);
+  block-size: calc(var(--ranger-track-height, 0.5rem) / 2);
+  margin-block-start: calc(var(--ranger-track-height, 0.5rem) / -4);
+  margin-inline-start: calc(var(--ranger-track-height, 0.5rem) / -4);
+  border-radius: 50%;
+  background: var(--ranger-surface, #fff);
+}
+
+/*
+ * The travel is inset by half a thumb at each end, which is how a native range
+ * input maps a value to an x and how every slider is drawn: the thumb sits
+ * inside the track instead of overhanging it. Measured against Chromium, this
+ * keeps the visible thumb within about 2px of the pointer instead of 8.
+ *
+ * `margin-inline-start`, not a translate: centring the thumb on its position
+ * has to flip with the writing direction, and a physical transform does not.
+ */
+.ranger__thumb {
+  position: absolute;
+  inset-inline-start: calc(
+    var(--ranger-thumb-size, 1.25rem) / 2 + var(--ranger-position, 0) *
+      (100% - var(--ranger-thumb-size, 1.25rem))
+  );
+  box-sizing: border-box;
+  inline-size: var(--ranger-thumb-size, 1.25rem);
+  block-size: var(--ranger-thumb-size, 1.25rem);
+  margin-inline-start: calc(var(--ranger-thumb-size, 1.25rem) / -2);
+  border: var(--ranger-thumb-ring-width, 2px) solid var(--ranger-thumb-border-color, #fff);
+  border-radius: 50%;
+  background: var(--ranger-thumb-color, var(--ranger-active-color, #525252));
+}
+
+/*
+ * The engine is invisible, so its focus ring has to be drawn out here or a
+ * keyboard user gets none at all - the direct consequence of `opacity: 0` that
+ * ADR-0001 calls out. Issue 06 owns proving the contrast meets AA and setting
+ * the token's default; this is the wiring, so no intermediate state ships
+ * without a focus indicator.
+ *
+ * `:has()` rather than a sibling combinator, so the ring does not depend on the
+ * engine and the thumb staying adjacent once issue 05 inserts the label and
+ * icon rows.
+ */
+.ranger__control:has(.ranger__engine:focus-visible) .ranger__thumb {
+  outline: var(--ranger-thumb-ring-width, 2px) solid var(--ranger-focus-color, #2563eb);
+  outline-offset: var(--ranger-thumb-ring-width, 2px);
+}
+
+/*
+ * Everything above is decoration. It must never take the pointer away from the
+ * engine, and it must never reach assistive tech — the `aria-hidden` in the
+ * template is the other half of that (ADR-0001).
+ */
+.ranger__track,
+.ranger__stops,
+.ranger__thumb {
+  pointer-events: none;
+}
+
+/*
+ * Genuinely invisible, genuinely focusable. Never `display: none` and never
+ * `visibility: hidden`: either would take the keyboard, the focus ring and the
+ * screen reader with it, which is the whole reason a native input is in here.
+ */
 .ranger__engine {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 0;
+  z-index: 1;
   inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ranger__engine:disabled {
+  cursor: default;
 }

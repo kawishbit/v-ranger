@@ -15,6 +15,7 @@ export type DiagnosticCode =
   | 'ordinal-stop-without-value'
   | 'value-not-in-stops'
   | 'value-out-of-range'
+  | 'value-off-step'
 
 /**
  * A complaint about the props or the value, returned as data rather than
@@ -104,6 +105,19 @@ function positionOfIndex(index: number, count: number): number {
 }
 
 /**
+ * Puts a number on the `min + n * step` grid, the way a native range input's
+ * value sanitisation algorithm does — including its last rule: when rounding up
+ * would overshoot `max`, round down instead. A range that is not a whole number
+ * of steps therefore cannot reach its own `max`.
+ */
+function snapToStep(value: number, min: number, max: number, step: number): number {
+  const clamped = clamp(value, min, max)
+  const snapped = min + Math.round((clamped - min) / step) * step
+
+  return snapped > max ? min + Math.floor((max - min) / step) * step : snapped
+}
+
+/**
  * Infers the axis from the props (ADR-0002) and normalises its stops.
  */
 export function resolveAxis<V>(props: AxisProps<V>): Axis<V> {
@@ -173,19 +187,29 @@ export function resolveAxis<V>(props: AxisProps<V>): Axis<V> {
   return { kind: 'ordinal', stops, diagnostics }
 }
 
-/** Index of the stop a value selects, or -1. */
-function indexOfValue<V>(axis: Axis<V>, value: V | null): number {
+/**
+ * Nothing to choose from: no stops to space, and no range to span. The read-side
+ * companion to the `no-axis` diagnostic `resolveAxis` raises for the same shape,
+ * so a consumer never has to match on a diagnostic code to ask the question.
+ */
+export function isEmptyAxis<V>(axis: Axis<V>): boolean {
+  return axis.kind === 'ordinal' && axis.stops.length === 0
+}
+
+/** Index of the stop a value selects, or -1. Matching is by identity, so an
+ * unrelated value simply misses rather than being a type error at the seam. */
+function indexOfValue<V>(axis: Axis<V>, value: unknown): number {
   return axis.stops.findIndex((stop) => Object.is(stop.value, value))
 }
 
-interface Placed<V> {
+export interface Placed<V> {
   stop: Stop<V>
   index: number
   position: number
 }
 
 /** Every stop with the position it occupies, so nothing has to index back in. */
-function placeStops<V>(axis: Axis<V>): Placed<V>[] {
+export function placeStops<V>(axis: Axis<V>): Placed<V>[] {
   if (axis.kind === 'numeric') {
     return axis.stops.map((stop, index) => ({
       stop,
@@ -256,10 +280,18 @@ export function resolve<V>(axis: Axis<V>, value: V | null): Resolved<V> {
   const unset = numeric ? value === null : index === -1
 
   if (numeric) {
-    // Report rather than rewrite: the consumer's value is theirs, and issue 03
-    // decides whether the component corrects it.
-    if (typeof value === 'number' && (value < axis.min || value > axis.max)) {
-      diagnostics.push({ code: 'value-out-of-range' })
+    // Report rather than rewrite: the consumer's value is theirs. Issue 03
+    // settled what the component does with it - nothing, because emitting a
+    // correction would be emitting on a prop change (ADR-0003) - so saying so
+    // is the only way the developer finds out.
+    if (typeof value === 'number') {
+      if (value < axis.min || value > axis.max) {
+        diagnostics.push({ code: 'value-out-of-range' })
+      } else if (snapToStep(value, axis.min, axis.max, axis.step) !== value) {
+        // A native range input cannot hold a value off its own step grid, so
+        // the engine and the thumb will both show the snapped one.
+        diagnostics.push({ code: 'value-off-step' })
+      }
     }
   } else if (value !== null && index === -1) {
     // On an ordinal axis, a value matching no stop is a developer error: render
@@ -282,31 +314,73 @@ export function resolve<V>(axis: Axis<V>, value: V | null): Resolved<V> {
 }
 
 /**
+ * The numeric coordinate space the interaction engine works in. A native range
+ * input can only hold numbers, so an ordinal axis lends it one integer per stop
+ * and a numeric axis lends it the range itself. Everything the component needs
+ * to drive the engine is here, so the component never asks which kind of axis
+ * it has (ADR-0001).
+ */
+export interface EngineRange {
+  min: number
+  max: number
+  step: number
+}
+
+/** The `min`/`max`/`step` to put on the engine. See `EngineRange`. */
+export function engineRange<V>(axis: Axis<V>): EngineRange {
+  if (axis.kind === 'numeric') return { min: axis.min, max: axis.max, step: axis.step }
+
+  // One integer per stop, so the native arrow key already moves exactly one
+  // stop and no keyboard handling has to be written by hand.
+  return { min: 0, max: Math.max(0, axis.stops.length - 1), step: 1 }
+}
+
+/** Where the engine currently sits, as a position. */
+export function engineToPosition<V>(axis: Axis<V>, engineValue: number): number {
+  const { min, max } = engineRange(axis)
+
+  return clamp(normalise(engineValue, min, max), 0, 1)
+}
+
+/**
+ * Where to put the engine for a position — snapped onto the engine's own grid,
+ * because a value the engine cannot hold is a value the browser would silently
+ * move. Two elements express one value and must never disagree (ADR-0001), so
+ * the position the presentation layer paints comes back through
+ * `engineToPosition` rather than being used raw.
+ */
+export function positionToEngine<V>(axis: Axis<V>, position: number): number {
+  const { min, max, step } = engineRange(axis)
+
+  return snapToStep(min + position * (max - min), min, max, step)
+}
+
+/**
  * Where a drag or click lands. Takes the current value because "if no enabled
  * stop exists in that direction, the value does not move" is undecidable
  * without knowing where the thumb came from.
+ *
+ * A numeric axis always yields a `number`, which the generic cannot know from
+ * the props alone — so narrowing the axis first is what makes the result
+ * honest, rather than a cast inside.
  */
+export function positionToValue<V>(
+  axis: NumericAxis<V>,
+  position: number,
+  from?: V | number | null,
+): number
 export function positionToValue<V>(
   axis: Axis<V>,
   position: number,
-  from: V | null = null,
-): V | null {
+  from?: V | number | null,
+): V | number | null
+export function positionToValue<V>(
+  axis: Axis<V>,
+  position: number,
+  from: V | number | null = null,
+): V | number | null {
   if (axis.kind === 'numeric') {
-    const raw = clamp(axis.min + position * (axis.max - axis.min), axis.min, axis.max)
-    const snapped = axis.min + Math.round((raw - axis.min) / axis.step) * axis.step
-
-    // A range that is not a whole number of steps cannot reach its own `max`:
-    // the last reachable value is the final whole step, exactly as a native
-    // range input behaves.
-    const onGrid =
-      snapped > axis.max
-        ? axis.min + Math.floor((axis.max - axis.min) / axis.step) * axis.step
-        : snapped
-
-    // The one unsound spot in the module: on a numeric axis the value type is
-    // `number`, which the generic cannot know when there are no stops to infer
-    // it from. Issue 03 gives the component overloads that make this honest.
-    return onGrid as V
+    return snapToStep(axis.min + position * (axis.max - axis.min), axis.min, axis.max, axis.step)
   }
 
   const nearest = nearestStopWhere(axis, position, () => true)
