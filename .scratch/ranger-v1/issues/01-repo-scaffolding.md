@@ -1,6 +1,6 @@
 # 01 — Repo scaffolding and build pipeline
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: —
 Spec: [../spec.md](../spec.md) §3, §8
 
@@ -29,3 +29,7 @@ A repo that builds, typechecks, lints and tests an empty component, so every lat
 ## Out of scope
 
 CI workflows and changesets (issue 12); the `exports` map and packaging verification (issue 10).
+
+## Comments
+
+**Resolved** in `ce82276` (`build: scaffold the v-ranger build pipeline`). Re-verified on the current tree: `npm run typecheck`, `npm run lint` and `npm test` (34 tests) all pass; `dist/` holds `v-ranger.js` (ESM), `v-ranger.umd.cjs` (UMD, global `VRanger`) and `index.d.ts`; `.husky/pre-commit` runs `lint-staged` (Prettier) then `typecheck`; `vitest.config.ts` declares both the `unit` and `browser` projects; no `sass`/`node-sass`/`sass-embedded` dependency and no `.scss`/`.sass` file exists.

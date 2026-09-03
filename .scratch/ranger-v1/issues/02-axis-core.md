@@ -1,6 +1,6 @@
 # 02 — Axis core: DOM-free value logic
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 Spec: [../spec.md](../spec.md) §5.1, §5.2 · [ADR-0002](../../../docs/adr/0002-inferred-ordinal-and-numeric-axes.md) · [ADR-0003](../../../docs/adr/0003-value-based-v-model-and-unset-state.md)
 
@@ -48,3 +48,7 @@ Diagnostics are **returned as data**, not written to `console` from inside the c
 ## Out of scope
 
 Any rendering, any Vue reactivity, any event emission.
+
+## Comments
+
+**Resolved** in `0c5af09` (`feat(axis): DOM-free axis core, test-first`). The "How this landed" notes above record the decisions taken during implementation.
