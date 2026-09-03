@@ -8,6 +8,14 @@ Spec: [../spec.md](../spec.md) §4, §5 · [ADR-0001](../../../docs/adr/0001-hyb
 
 `<Ranger>` renders and works: a real range input driving a visually separate presentation layer, on both axes.
 
+## Already landed in issue 01
+
+`src/index.ts` (named `Ranger` export, default plugin with `install()`) and
+`inheritAttrs: false` with attrs forwarded to the engine both exist already — issue 01
+needed them to prove the build and the UMD global. Extend them; don't rewrite them. The
+engine is still visible (`opacity: 0` is this ticket's job) and `src/ranger.css` is an
+empty placeholder.
+
 ## Scope
 
 - `src/Ranger.vue`, `<script setup lang="ts">`, `inheritAttrs: false` — `class`/`style` to the root, all other attrs to the engine.

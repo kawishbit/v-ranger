@@ -1,0 +1,9 @@
+dist
+coverage
+node_modules
+
+# Hand-authored prose: the glossary, the ADRs and the tracker.
+# Prettier owns code formatting, not the way we write sentences.
+CONTEXT.md
+docs
+.scratch

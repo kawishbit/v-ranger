@@ -19,5 +19,3 @@ Single-context: one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/ag
 ## Main Rules
 
 - When committing to this repo, the author should be the default git user set in the local git config. No co-author should be added.
-
-

@@ -137,6 +137,16 @@ shipped stylesheet.
 
 ## Words we don't use
 
+This governs how we talk about the project — code, comments, docs prose, issue
+titles, commit messages. Two deliberate exemptions, because they address readers
+who have never read this file:
+
+- **npm keywords and the package description**, which exist to be found by people
+  searching for "range slider".
+- **User-facing text**, above all an accessible name. To a screen-reader user the
+  control _is_ a slider; `aria-valuetext` and labels use the words a reader knows,
+  not ours.
+
 | Avoid                | Use instead                | Why                                                        |
 | -------------------- | -------------------------- | ---------------------------------------------------------- |
 | bullet               | thumb, or stop marker      | vlider's term; ambiguous between the thumb and stop dots    |

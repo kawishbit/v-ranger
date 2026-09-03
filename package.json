@@ -1,0 +1,92 @@
+{
+  "name": "v-ranger",
+  "version": "0.1.0",
+  "description": "A colourful, emotive range slider for Vue 3.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kawish B",
+  "homepage": "https://ranger.kawishbit.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kawishbit/ranger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kawishbit/ranger/issues"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "range",
+    "slider",
+    "input-range",
+    "range-slider",
+    "gradient",
+    "emoji",
+    "accessible"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@11.8.0",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/v-ranger.umd.cjs",
+  "module": "./dist/v-ranger.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/v-ranger.js",
+      "require": "./dist/v-ranger.umd.cjs"
+    },
+    "./style.css": "./dist/v-ranger.css",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "vite build",
+    "build:types": "vue-tsc -p tsconfig.build.json",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project unit",
+    "test:browser": "vitest run --project browser",
+    "test:all": "vitest run",
+    "prepare": "husky"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.4.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/browser": "^5.0.0",
+    "@vitest/browser-playwright": "^5.0.0",
+    "@vue/test-utils": "^2.5.0",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.10.0",
+    "globals": "^17.12.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "lint-staged": "^17.4.1",
+    "playwright": "^1.62.1",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0",
+    "vue": "^3.5.42",
+    "vue-tsc": "^3.3.11"
+  }
+}

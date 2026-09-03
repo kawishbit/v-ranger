@@ -24,7 +24,7 @@ A repo that builds, typechecks, lints and tests an empty component, so every lat
 - `npm run build` emits ESM, UMD and `.d.ts` into `dist/`.
 - `npm run typecheck`, `npm run lint` and `npm test` all pass on a placeholder component.
 - A staged file with bad formatting is fixed by the pre-commit hook.
-- `grep -ri sass` and `grep -ri scss` over the repo return nothing outside `docs/adr/`.
+- No Sass toolchain: no `sass`/`node-sass`/`sass-embedded` dependency is installed, and no `.scss`/`.sass` file exists anywhere in the repo. (Prose that _mentions_ Sass — ADR-0004's filename in a link, this ticket — does not count. The original wording of this criterion was a naive `grep -ri sass`, which the ADR's own filename fails.)
 
 ## Out of scope
 

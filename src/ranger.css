@@ -1,0 +1,23 @@
+/*
+ * Plain CSS. No preprocessor, ever — see ADR-0004 under docs/adr/.
+ *
+ * Two rules this file lives under:
+ *   1. Every visual value comes from a `--ranger-*` token (issue 08). Tokens are
+ *      public API, so none get declared until something reads them.
+ *   2. Logical properties only. No `left`, `right`, `margin-left`, ... so that
+ *      RTL works today and vertical stays cheap.
+ *
+ * This is a placeholder; the real stylesheet arrives with issues 03 and 08.
+ * The engine becomes `opacity: 0` in issue 03, once there is a presentation
+ * layer to look at — until then it stays visible so the playground shows
+ * something.
+ */
+
+.ranger {
+  display: block;
+  inline-size: 100%;
+}
+
+.ranger__engine {
+  inline-size: 100%;
+}
