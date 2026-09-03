@@ -60,6 +60,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run --project unit",
     "test:browser": "vitest run --project browser",
+    "test:coverage": "vitest run --project unit --coverage",
     "test:all": "vitest run",
     "prepare": "husky"
   },
@@ -72,6 +73,7 @@
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/browser": "^5.0.0",
     "@vitest/browser-playwright": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.0",
     "@vue/test-utils": "^2.5.0",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",

@@ -16,6 +16,14 @@ needed them to prove the build and the UMD global. Extend them; don't rewrite th
 engine is still visible (`opacity: 0` is this ticket's job) and `src/ranger.css` is an
 empty placeholder.
 
+## Worth reassessing here
+
+`src/axis.ts` branches on `axis.kind` in five places. As the module's first real consumer,
+this ticket is where to judge whether two axis strategy objects would be clearer, or
+whether the branching is fine at this size. Also: `positionToValue` returns `onGrid as V`
+because the generic cannot know that a numeric axis carries `number`. Component-level
+overloads are the honest fix.
+
 ## Scope
 
 - `src/Ranger.vue`, `<script setup lang="ts">`, `inheritAttrs: false` — `class`/`style` to the root, all other attrs to the engine.

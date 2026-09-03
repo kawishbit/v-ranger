@@ -8,6 +8,10 @@ Spec: [../spec.md](../spec.md) §4.5, §5.3
 
 Reproduce the original layout — labels above, emoji below — **with no dependency of any kind**, and let consumers replace any part of it.
 
+`Stop` in `src/types.ts` currently carries `value`, `at`, `label`, `color` and `disabled`.
+`icon` and `image` are this ticket's to add - CONTEXT.md already documents them as part of
+the shape.
+
 ## Scope
 
 - Render each stop's `label` and `icon`/`image` around the track, positioned from the stop's own position value.

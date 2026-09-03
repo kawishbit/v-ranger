@@ -24,6 +24,10 @@ UMD entry currently requires `VRanger.default` for the plugin (see the note in
 - Smoke tests in `examples/`, each installing from a packed tarball: a Vite + Vue 3 app, a Nuxt 3 app (SSR), and a plain `<script src>` UMD page with no build step.
 - `README.md`: install, quickstart reproducing the screenshot, prop/event/slot tables, token table, and the **vlider migration table**.
 
+Also verify, now that `axis.ts` is actually reachable from the entry, that `warn()` is
+stripped: no `[ranger]` string and no `console.warn` from the axis core in `dist/`. Issue 02
+checked this with a throwaway build because nothing imported the module yet.
+
 ## Acceptance criteria
 
 - `npm publish --dry-run` lists only the intended files, and the tarball is small enough to justify itself.
