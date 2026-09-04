@@ -253,7 +253,7 @@ Changesets for versioning and notes. GitHub Actions (GitHub only, no other forge
 | [06](./issues/06-accessibility.md)            | Accessibility to WCAG 2.2 AA         | resolved        |
 | [07](./issues/07-states.md)                   | Disabled, readonly and unset states  | resolved        |
 | [08](./issues/08-tokens-and-sizes.md)         | Token surface and size scale         | resolved        |
-| [09](./issues/09-interaction-tests.md)        | Browser-mode interaction tests       | ready-for-agent |
+| [09](./issues/09-interaction-tests.md)        | Browser-mode interaction tests       | resolved        |
 | [10](./issues/10-packaging.md)                | Packaging, entries and SSR check     | ready-for-agent |
 | [11](./issues/11-docs-site.md)                | VitePress docs site                  | ready-for-agent |
 | [12](./issues/12-release-engineering.md)      | CI, changesets and first release     | ready-for-human |

@@ -38,6 +38,21 @@ export function blockWithLabel(root: Element, label: string): HTMLElement {
 }
 
 /**
+ * The stop block carrying one stop's icon. A label and an icon on the same
+ * stop live in separate blocks — one per side (`labelPosition`/`iconPosition`)
+ * — so this cannot be found through `blockWithLabel`.
+ */
+export function blockWithIcon(root: Element, icon: string): HTMLElement {
+  const block = [...root.querySelectorAll('.ranger__stop-block')].find((candidate) =>
+    candidate.querySelector('.ranger__icon')?.textContent?.includes(icon),
+  )
+
+  if (!block) throw new Error(`no stop with icon ${icon}`)
+
+  return block as HTMLElement
+}
+
+/**
  * One macrotask. The unset key check watches a press rather than intercepting
  * it, so its answer lands after the platform has had the key — after every
  * keydown listener, and after the `input` the default action may fire.

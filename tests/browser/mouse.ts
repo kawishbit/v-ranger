@@ -15,23 +15,64 @@ interface Point {
 
 const button = 'left'
 
-/** Press, move, release: a drag along the track. */
-export async function drag(from: Point, to: Point) {
-  const mouse = cdp()
-
-  await mouse.send('Input.dispatchMouseEvent', {
+/** Presses the button down, without moving or releasing — half a drag, for a
+ * test that has to look at the world while the pointer is still held. */
+export async function press(at: Point) {
+  await cdp().send('Input.dispatchMouseEvent', {
     type: 'mousePressed',
     button,
     clickCount: 1,
-    ...from,
+    ...at,
   })
-  await mouse.send('Input.dispatchMouseEvent', { type: 'mouseMoved', button, buttons: 1, ...to })
-  await mouse.send('Input.dispatchMouseEvent', {
+}
+
+/** Moves a held button to a point, firing the same `mousemove` a real drag would. */
+export async function moveTo(at: Point) {
+  await cdp().send('Input.dispatchMouseEvent', { type: 'mouseMoved', button, buttons: 1, ...at })
+}
+
+/** Releases a held button at a point. */
+export async function release(at: Point) {
+  await cdp().send('Input.dispatchMouseEvent', {
     type: 'mouseReleased',
     button,
     clickCount: 1,
-    ...to,
+    ...at,
   })
+}
+
+/** Press, move, release: a drag along the track. */
+export async function drag(from: Point, to: Point) {
+  await press(from)
+  await moveTo(to)
+  await release(to)
+}
+
+/** One finger's worth of `Input.dispatchTouchEvent`'s `touchPoints`. */
+function finger(at: Point) {
+  return [{ x: at.x, y: at.y, id: 0 }]
+}
+
+/** Touches down, without moving or lifting — the touch half of `press`. */
+export async function touchDown(at: Point) {
+  await cdp().send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: finger(at) })
+}
+
+/** Moves a held touch to a point. */
+export async function touchMoveTo(at: Point) {
+  await cdp().send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: finger(at) })
+}
+
+/** Lifts the finger. */
+export async function touchUp() {
+  await cdp().send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+}
+
+/** Touch down, move, up: the touch equivalent of `drag`. */
+export async function touchDrag(from: Point, to: Point) {
+  await touchDown(from)
+  await touchMoveTo(to)
+  await touchUp()
 }
 
 /**

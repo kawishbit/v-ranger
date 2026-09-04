@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [vue()],
   // Named up front so the browser project never discovers it mid-run and
   // reloads the page under a test, which vitest warns is flaky.
-  optimizeDeps: { include: ['axe-core'] },
+  optimizeDeps: { include: ['axe-core', 'vue/server-renderer'] },
   test: {
     coverage: {
       provider: 'v8',
