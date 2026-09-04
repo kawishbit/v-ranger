@@ -4,13 +4,16 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [vue()],
+  // Named up front so the browser project never discovers it mid-run and
+  // reloads the page under a test, which vitest warns is flaky.
+  optimizeDeps: { include: ['axe-core'] },
   test: {
     coverage: {
       provider: 'v8',
       // The DOM-free modules, where the bugs live (spec §9) and where full
       // branch coverage is cheap enough to insist on. The component is covered
       // by the browser project instead.
-      include: ['src/axis.ts', 'src/diagnostics.ts', 'src/gradients.ts'],
+      include: ['src/announce.ts', 'src/axis.ts', 'src/diagnostics.ts', 'src/gradients.ts'],
       thresholds: { branches: 100, functions: 100, lines: 100, statements: 100 },
     },
     projects: [

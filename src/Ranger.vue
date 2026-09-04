@@ -10,8 +10,17 @@
  * thumb goes — including which kind of axis it is looking at, which it never
  * asks.
  */
-import { computed, onBeforeUnmount, nextTick, shallowRef, useAttrs, watchEffect } from 'vue'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  nextTick,
+  shallowRef,
+  useAttrs,
+  watchEffect,
+} from 'vue'
 import type { StyleValue } from 'vue'
+import { valueText } from './announce'
 import {
   engineRange,
   engineToPosition,
@@ -141,6 +150,12 @@ const range = computed(() => engineRange(axis.value))
  */
 const engineValue = computed(() => positionToEngine(axis.value, resolved.value.position))
 const position = computed(() => engineToPosition(axis.value, engineValue.value))
+
+/**
+ * What a screen reader reads out. The engine already announces a number, and a
+ * number is not an answer: this is the answer (spec §7). See `./announce`.
+ */
+const announced = computed(() => valueText(axis.value, resolved.value, engineValue.value))
 
 const placed = computed(() => placeStops(axis.value))
 
@@ -306,6 +321,35 @@ function syncEngine() {
   if (el && el.value !== String(engineValue.value)) el.value = String(engineValue.value)
 }
 
+/** Whether an attribute the consumer passed actually carries a name. */
+function isNamed(value: unknown): boolean {
+  return typeof value === 'string' && value.trim() !== ''
+}
+
+/**
+ * A control nobody can name is a control a screen reader announces as "slider"
+ * and nothing else, and it is the one accessibility failure the engine cannot
+ * fix for us: the name has to come from outside (spec §7).
+ *
+ * Checked on mount rather than in a `watchEffect`, because `labels` is a DOM
+ * question — a wrapping `<label>` is not visible from the props — and asking it
+ * during render would be asking it on the server.
+ */
+onMounted(() => {
+  /* v8 ignore next -- the production path, verified by grepping the build */
+  if (!import.meta.env.DEV) return
+
+  const el = engine.value
+  if (!el) return
+
+  const named =
+    isNamed(attrs['aria-label']) ||
+    isNamed(attrs['aria-labelledby']) ||
+    (el.labels?.length ?? 0) > 0
+
+  if (!named) warn([{ code: 'no-accessible-name' }])
+})
+
 /** The value this interaction produced, boxed so `null` stays a real value. */
 let pendingCommit: { value: Model } | null = null
 
@@ -338,6 +382,51 @@ function onInput(event: Event) {
   const next = positionToValue(axis.value, at, current.value)
 
   if (offer(next)) pendingCommit = { value: next }
+
+  void nextTick(syncEngine)
+}
+
+/** Every key a native range input answers to (spec §7). */
+const VALUE_KEYS = new Set([
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown',
+])
+
+/**
+ * The one thing the engine cannot do for us, because from its point of view
+ * there is nothing to do: an unset Ranger parks it at the start with no value,
+ * so `Home` and `ArrowLeft` move it nowhere, fire no `input`, and leave the
+ * first stop unreachable from the keyboard. Spec §7 asks for a keyboard pass
+ * that reaches every enabled stop, so this is where it gets one.
+ *
+ * The rule is uniform across the keys rather than clever: while unset, the
+ * first press answers with the stop the thumb is parked on and goes no
+ * further, and every press after that steps normally. Deciding per key which
+ * way the engine *would* have moved would mean re-deriving the platform's own
+ * arrow behaviour, which flips with the writing direction — the exact
+ * duplication ADR-0001 exists to avoid. The cost is that `End` on an unanswered
+ * Ranger chooses the first stop rather than the last, and has to be pressed
+ * twice.
+ */
+function onKeyDown(event: KeyboardEvent) {
+  if (props.readonly || !resolved.value.unset) return
+  if (!VALUE_KEYS.has(event.key) || event.altKey || event.ctrlKey || event.metaKey) return
+
+  event.preventDefault()
+
+  const next = positionToValue(axis.value, position.value, current.value)
+  if (!offer(next)) return
+
+  // The engine never saw this one, so it will not fire the native `change`
+  // that `onChange` is waiting for — the same reason a label click commits
+  // itself.
+  emit('change', resolve(axis.value, next))
 
   void nextTick(syncEngine)
 }
@@ -413,6 +502,63 @@ onBeforeUnmount(() => endDrag?.())
 <template>
   <div class="ranger" :class="attrs.class" :style="rootStyle" v-bind="stateAttrs">
     <!--
+      First in the tree, though second in the grid: a wrapping `<label>` names
+      its first labelable descendant, and a stop block is a `<button>`, which is
+      labelable. With the blocks written first, `<label>Mood <Ranger/></label>`
+      would name a decorative button nobody can reach and leave the engine
+      anonymous (spec §7). Which row each part is drawn in is the stylesheet's
+      business, so nothing about the order is visible.
+    -->
+    <div class="ranger__control">
+      <div class="ranger__track" aria-hidden="true">
+        <div class="ranger__fill" />
+      </div>
+
+      <ul class="ranger__stops" aria-hidden="true">
+        <li
+          v-for="place in placed"
+          :key="place.index"
+          class="ranger__stop"
+          :style="{ '--ranger-stop-position': String(place.position) }"
+        />
+      </ul>
+
+      <div class="ranger__thumb" aria-hidden="true">
+        <slot name="thumb" :position="position" :stop="resolved.stop" :unset="resolved.unset" />
+      </div>
+
+      <!--
+        Order matters twice over. `v-bind` comes first so the axis owns
+        min/max/step/value whatever the consumer passes; `:value` comes last so
+        the browser has the range before it sanitises the value into it.
+
+        `min`, `max` and `value` are the ARIA ones too: a range input has role
+        `slider`, and a browser reports its own attributes as `aria-valuemin`,
+        `aria-valuemax` and `aria-valuenow` without being asked. Restating them
+        as explicit `aria-*` would be a second place for them to be wrong
+        (ADR-0001). `aria-valuetext` is the exception, because there is no
+        attribute a native input reads the human answer out of.
+      -->
+      <input
+        ref="engine"
+        v-bind="engineAttrs"
+        type="range"
+        class="ranger__engine"
+        :name="name"
+        :disabled="isDisabled"
+        :aria-valuetext="announced"
+        :min="range.min"
+        :max="range.max"
+        :step="range.step"
+        :value="engineValue"
+        @input="onInput"
+        @change="onChange"
+        @keydown="onKeyDown"
+        @pointerdown="onPointerDown"
+      />
+    </div>
+
+    <!--
       Decoration, like everything outside the engine: a screen reader is given
       the scale by the engine's own announcement, and reading every label a
       second time would be the noise ADR-0001 exists to avoid. `tabindex="-1"`
@@ -462,46 +608,6 @@ onBeforeUnmount(() => endDrag?.())
         </span>
       </template>
     </button>
-
-    <div class="ranger__control">
-      <div class="ranger__track" aria-hidden="true">
-        <div class="ranger__fill" />
-      </div>
-
-      <ul class="ranger__stops" aria-hidden="true">
-        <li
-          v-for="place in placed"
-          :key="place.index"
-          class="ranger__stop"
-          :style="{ '--ranger-stop-position': String(place.position) }"
-        />
-      </ul>
-
-      <div class="ranger__thumb" aria-hidden="true">
-        <slot name="thumb" :position="position" :stop="resolved.stop" :unset="resolved.unset" />
-      </div>
-
-      <!--
-        Order matters twice over. `v-bind` comes first so the axis owns
-        min/max/step/value whatever the consumer passes; `:value` comes last so
-        the browser has the range before it sanitises the value into it.
-      -->
-      <input
-        ref="engine"
-        v-bind="engineAttrs"
-        type="range"
-        class="ranger__engine"
-        :name="name"
-        :disabled="isDisabled"
-        :min="range.min"
-        :max="range.max"
-        :step="range.step"
-        :value="engineValue"
-        @input="onInput"
-        @change="onChange"
-        @pointerdown="onPointerDown"
-      />
-    </div>
   </div>
 </template>
 

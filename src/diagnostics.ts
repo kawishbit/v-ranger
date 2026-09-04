@@ -22,6 +22,7 @@ export type DiagnosticCode =
   | 'value-off-step'
   | 'invalid-gradient'
   | 'image-without-alt'
+  | 'no-accessible-name'
 
 export interface Diagnostic {
   code: DiagnosticCode

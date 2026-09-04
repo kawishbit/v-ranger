@@ -26,7 +26,8 @@ function tokensIn(text: string): Set<string> {
 
 /** The names spec §6 publishes, which is the list this package may not rename. */
 function documentedTokens(): Set<string> {
-  const section = readFileSync(spec, 'utf8').match(/\n## 6\. Tokens\n([\s\S]*?)\n## 7\./)?.[1]
+  // Line endings are the checkout's business, not the spec's.
+  const section = readFileSync(spec, 'utf8').match(/## 6\. Tokens\r?\n([\s\S]*?)\r?\n## 7\./)?.[1]
 
   if (section === undefined) throw new Error('spec §6 not found')
 
