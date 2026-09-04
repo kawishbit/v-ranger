@@ -83,8 +83,10 @@ interface Stop<V = unknown> {
   label?: string
   /** Unicode string, or a Vue component. */
   icon?: string | Component
-  /** Image URL, rendered as <img>. `alt` defaults to `label`. */
+  /** Image URL, rendered as <img>. Wins over `icon` where a stop has both. */
   image?: string
+  /** What the image says to a reader who cannot see it. Defaults to `label`. */
+  alt?: string
   /** Overrides this stop's slice of the gradient. Any CSS colour. */
   color?: string
   disabled?: boolean
@@ -185,7 +187,7 @@ Labels and icons are clickable and jump the thumb to their stop, then return foc
 
 Public API; renaming one is a breaking change (ADR-0004).
 
-**Geometry** `--ranger-track-height` `--ranger-track-radius` `--ranger-thumb-size` `--ranger-thumb-ring-width` `--ranger-gap` `--ranger-font` `--ranger-label-size` `--ranger-icon-size`
+**Geometry** `--ranger-track-height` `--ranger-track-radius` `--ranger-thumb-size` `--ranger-thumb-ring-width` `--ranger-gap` `--ranger-font` `--ranger-label-size` `--ranger-label-weight` `--ranger-label-weight-selected` `--ranger-icon-size`
 
 **Colour** `--ranger-surface` `--ranger-track-color` `--ranger-gradient` `--ranger-thumb-color` `--ranger-thumb-border-color` `--ranger-label-color` `--ranger-label-color-selected` `--ranger-focus-color`
 
@@ -246,7 +248,7 @@ Changesets for versioning and notes. GitHub Actions (GitHub only, no other forge
 | [02](./issues/02-axis-core.md)                | Axis core: DOM-free value logic      | ready-for-agent |
 | [03](./issues/03-component-shell.md)          | Component shell: engine + presentation | resolved        |
 | [04](./issues/04-gradient-system.md)          | Gradient system and thumb tinting    | resolved        |
-| [05](./issues/05-labels-icons-slots.md)       | Labels, icons and the stop slot      | ready-for-agent |
+| [05](./issues/05-labels-icons-slots.md)       | Labels, icons and the stop slot      | resolved        |
 | [06](./issues/06-accessibility.md)            | Accessibility to WCAG 2.2 AA         | ready-for-agent |
 | [07](./issues/07-states.md)                   | Disabled, readonly and unset states  | ready-for-agent |
 | [08](./issues/08-tokens-and-sizes.md)         | Token surface and size scale         | ready-for-agent |

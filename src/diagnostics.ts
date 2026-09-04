@@ -21,6 +21,7 @@ export type DiagnosticCode =
   | 'value-out-of-range'
   | 'value-off-step'
   | 'invalid-gradient'
+  | 'image-without-alt'
 
 export interface Diagnostic {
   code: DiagnosticCode

@@ -3,6 +3,7 @@ import { cdp, userEvent } from 'vitest/browser'
 import { nextTick } from 'vue'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Ranger } from '../../src/index'
+import { drag } from './mouse'
 
 /**
  * Real Chromium, because these are the claims jsdom cannot check: that the
@@ -32,31 +33,6 @@ afterEach(() => {
   wrapper?.unmount()
   wrapper = null
 })
-
-/**
- * A real pointer drag. Synthetic pointer events do not move a native range
- * input — only trusted ones do — so this goes through the browser's own input
- * pipeline. The test frame sits at the page origin, so client coordinates and
- * page coordinates are the same.
- */
-async function drag(from: { x: number; y: number }, to: { x: number; y: number }) {
-  const mouse = cdp()
-  const button = 'left'
-
-  await mouse.send('Input.dispatchMouseEvent', {
-    type: 'mousePressed',
-    button,
-    clickCount: 1,
-    ...from,
-  })
-  await mouse.send('Input.dispatchMouseEvent', { type: 'mouseMoved', button, buttons: 1, ...to })
-  await mouse.send('Input.dispatchMouseEvent', {
-    type: 'mouseReleased',
-    button,
-    clickCount: 1,
-    ...to,
-  })
-}
 
 /** Where the thumb actually is, in the page, in real pixels. */
 function thumbCentre(root: Element) {

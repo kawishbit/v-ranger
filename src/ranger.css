@@ -10,8 +10,6 @@
  *      thing only a stylesheet can know: which way the page runs.
  *   2. Logical properties only. No `left`, `right`, `margin-left`, ... so that
  *      RTL works today and vertical stays cheap.
- *
- * The label and icon rows that sit above and below the control are issue 05's.
  */
 
 .ranger {
@@ -23,7 +21,15 @@
    */
   --ranger-gradient-direction: to right;
 
-  display: block;
+  /*
+   * Three rows — labels, the track, icons — and one column, so a block's
+   * percentage widths resolve against the same box the track spans. There is no
+   * `row-gap`: a side with nothing on it would still pay for one, and a Ranger
+   * with no labels at all has to be exactly as tall as its track. The blocks
+   * carry the gap themselves instead.
+   */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   inline-size: 100%;
   font-family: var(--ranger-font, inherit);
 }
@@ -33,10 +39,12 @@
 }
 
 /*
- * The track area, and the only part of a Ranger the engine covers: labels and
- * icons will sit outside it, where they need their own click handling.
+ * The track area, and the only part of a Ranger the engine covers. Labels and
+ * icons sit outside it, in the rows either side, where the engine cannot take
+ * their clicks away from them.
  */
 .ranger__control {
+  grid-row: 2;
   position: relative;
   display: grid;
   align-items: center;
@@ -123,6 +131,8 @@
  */
 .ranger__thumb {
   position: absolute;
+  display: grid;
+  place-items: center;
   inset-inline-start: calc(
     var(--ranger-thumb-size, 1.25rem) / 2 + var(--ranger-position, 0) *
       (100% - var(--ranger-thumb-size, 1.25rem))
@@ -200,4 +210,106 @@
 
 .ranger__engine:disabled {
   cursor: default;
+}
+
+/*
+ * A **stop block**: one stop's label and icon (CONTEXT.md). Every block on a
+ * side shares one grid cell, so the row is as tall as the tallest of them and
+ * nothing has to be measured; each is then pushed along the same inset path the
+ * thumb travels, so a label and the thumb that lands on it line up.
+ *
+ * `--slice` is deliberately not a `--ranger-*` name: tokens are public API and
+ * this is an internal proportion (ADR-0004). One slice of the track wide is what
+ * makes a long label wrap rather than run into its neighbour. Where a slice
+ * would fall below spec §7's 24px touch target the target wins and neighbouring
+ * blocks begin to meet: an unreachable control is the worse failure.
+ */
+.ranger__stop-block {
+  --slice: calc(100% / var(--ranger-stop-count, 1));
+
+  grid-column: 1;
+  justify-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--ranger-gap, 0.5rem) / 2);
+  box-sizing: border-box;
+  inline-size: var(--slice);
+  min-inline-size: 24px;
+  min-block-size: 24px;
+  /*
+   * Centred on the stop, then clamped inside the component. Without the clamp a
+   * block at either end hangs half its own width outside the Ranger, where a
+   * consumer's `overflow: hidden` cuts it off or it collides with whatever is
+   * next to it. The first and last labels sit a little inboard of their stops as
+   * the price, which is how every scale with edge labels is drawn.
+   */
+  margin-inline-start: clamp(
+    0px,
+    var(--ranger-thumb-size, 1.25rem) / 2 + var(--ranger-stop-position, 0) *
+      (100% - var(--ranger-thumb-size, 1.25rem)) - var(--slice) / 2,
+    100% - var(--slice)
+  );
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ranger__stop-block[data-side='above'] {
+  grid-row: 1;
+  /* Pinned to the track rather than floated in the row, so a label that wraps
+     to two lines grows away from the track instead of pushing off it. */
+  align-self: end;
+  padding-block-end: var(--ranger-gap, 0.5rem);
+}
+
+.ranger__stop-block[data-side='below'] {
+  grid-row: 3;
+  align-self: start;
+  padding-block-start: var(--ranger-gap, 0.5rem);
+}
+
+.ranger__stop-block:disabled {
+  cursor: default;
+}
+
+/*
+ * The selected label is the bold one in the original. Both halves are tokens,
+ * because "which stop is chosen" is exactly the kind of thing a consumer
+ * restyles and there is no theme class to do it with (ADR-0004).
+ */
+.ranger__label {
+  color: var(--ranger-label-color, #525252);
+  font-size: var(--ranger-label-size, 0.8125rem);
+  font-weight: var(--ranger-label-weight, 400);
+  line-height: 1.25;
+  /* A word longer than its slice breaks rather than overlapping a neighbour. */
+  overflow-wrap: anywhere;
+}
+
+.ranger__stop-block[data-selected] .ranger__label {
+  color: var(--ranger-label-color-selected, #171717);
+  font-weight: var(--ranger-label-weight-selected, 600);
+}
+
+/*
+ * Whatever the consumer put here: a unicode text node, an image, or a component.
+ * Never a font — vlider's demo silently required one, and goal 1 of the spec is
+ * that a clean install looks like the screenshot.
+ */
+.ranger__icon {
+  font-size: var(--ranger-icon-size, 1.25rem);
+  line-height: 1;
+}
+
+.ranger__icon img {
+  display: block;
+  inline-size: auto;
+  block-size: var(--ranger-icon-size, 1.25rem);
+  max-inline-size: 100%;
+  object-fit: contain;
 }

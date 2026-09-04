@@ -46,6 +46,12 @@ track is the whole path, the fill is the travelled part.
 The draggable marker. In the presentation layer it is a normal element, so it can hold
 content and tint itself to the **selected stop**'s colour.
 
+### Stop block
+
+One stop's **label** and **icon**, as one clickable box above or below the track — what
+spec §4.5 calls "the whole label + icon block" and what the `stop` slot replaces. Distinct
+from the **stop marker**, which is the dot drawn on the track itself.
+
 ### Label
 
 The text above a **stop** (`stop.label`). Clickable to jump the thumb there, but not
@@ -55,7 +61,8 @@ to every stop.
 ### Icon
 
 The emoji, image, or component below a **stop** (`stop.icon` / `stop.image`). Never a
-font dependency: unicode text, an `<img>`, or a Vue component the consumer supplies.
+font dependency: unicode text, an `<img>`, or a Vue component the consumer supplies. An
+image is described by `stop.alt`, falling back to the **label**.
 
 ## The model
 
@@ -64,7 +71,7 @@ font dependency: unicode text, an `<img>`, or a Vue component the consumer suppl
 One addressable point on the **axis**:
 
 ```ts
-{ value, label?, icon?, image?, color?, at?, disabled? }
+{ value, label?, icon?, image?, alt?, color?, at?, disabled? }
 ```
 
 `value` is what `v-model` carries. `at` pins the stop to a coordinate on a **numeric
