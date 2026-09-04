@@ -425,6 +425,58 @@
 }
 
 /*
+ * Unset (ADR-0003): a state, not a value. The ramp is how a Ranger invites an
+ * answer, so an unanswered one does not paint it — a flat track and a faded
+ * thumb parked at the start, which is what makes "nobody has chosen" impossible
+ * to read as "chose the first one". The fill has no colour to withhold: it
+ * carries only its extent.
+ */
+.ranger[data-unset] .ranger__track {
+  background-image: none;
+  background-color: var(--_unset-track-color);
+}
+
+.ranger[data-unset] .ranger__thumb {
+  opacity: var(--_unset-opacity);
+}
+
+/*
+ * Disabled: the whole Ranger dims, labels and icons included, and every block
+ * inside it is a disabled button already — so nothing here has to say a second
+ * time that they do not respond.
+ */
+.ranger[data-disabled] {
+  opacity: var(--_disabled-opacity);
+}
+
+/*
+ * Readonly is not a weak disabled. It renders at full strength and stays
+ * focusable and announced (spec §5.2); the only thing it takes back is what the
+ * pointer is promised, since nothing it clicks will move.
+ */
+.ranger[data-readonly] .ranger__engine,
+.ranger[data-readonly] .ranger__stop-block {
+  cursor: default;
+}
+
+/*
+ * One stop that cannot be chosen where the rest can. Fading it is not enough on
+ * its own — contrast alone may not carry meaning (spec §7) — so its label is
+ * struck through as well, its marker dims with it for a Ranger that shows no
+ * labels at all, and `aria-valuetext` says "unavailable" to anyone who can see
+ * none of it. The whole-Ranger case is excluded because that fade is already
+ * applied to the root, and two would compound.
+ */
+.ranger:not([data-disabled]) .ranger__stop-block:disabled,
+.ranger:not([data-disabled]) .ranger__stop[data-disabled] {
+  opacity: var(--_disabled-opacity);
+}
+
+.ranger__stop-block:disabled .ranger__label {
+  text-decoration: line-through;
+}
+
+/*
  * Spec §7: no transition anywhere for a reader who has asked for none, rather
  * than only on the properties this file happens to animate today. Last in the
  * file, so it wins on order against the equal specificity of `.ranger *`.

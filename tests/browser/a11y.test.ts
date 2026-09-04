@@ -38,6 +38,21 @@ function host(style = ''): HTMLElement {
   return element
 }
 
+/**
+ * A tab stop of its own, after whatever is mounted. Tabbing has to land
+ * somewhere, and "somewhere" must not be the browser's own chrome: a test that
+ * tabs out of the document takes the next test's focus with it.
+ */
+function sentinel() {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.textContent = 'elsewhere'
+  document.body.append(button)
+  hosts.push(button)
+
+  return button
+}
+
 function mountIn(into: HTMLElement, props: Record<string, unknown> = {}) {
   const wrapper = mount(Ranger, {
     props: { stops: moods, ...props },
@@ -254,16 +269,22 @@ describe('the keyboard', () => {
   })
 
   it('is not reachable at all while disabled', async () => {
+    const before = sentinel()
     const ranger = mountIn(host(), { modelValue: 'meh', disabled: true })
+    const after = sentinel()
 
+    before.focus()
     await userEvent.tab()
 
+    expect(document.activeElement).toBe(after)
     expect(document.activeElement).not.toBe(engineOf(ranger))
   })
 
   it('is reachable but unchangeable while readonly', async () => {
+    const before = sentinel()
     const ranger = mountBound({ modelValue: 'meh', readonly: true })
 
+    before.focus()
     await userEvent.tab()
     expect(document.activeElement).toBe(engineOf(ranger))
 

@@ -230,7 +230,9 @@ describe('colour in a real browser', () => {
   }
 
   it('paints the six-stop mood ramp with no colour configured at all', () => {
-    const ranger = mountRanger({ stops: moods })
+    // A value, because an unset Ranger paints no ramp at all (issue 07) — the
+    // subject here is what happens with no *colour* configured.
+    const ranger = mountRanger({ stops: moods, modelValue: 'angry' })
     const ramp = trackRamp(ranger.element)
 
     expect(ramp).toContain('linear-gradient(to right')

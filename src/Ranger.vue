@@ -515,10 +515,13 @@ onBeforeUnmount(() => endDrag?.())
       </div>
 
       <ul class="ranger__stops" aria-hidden="true">
+        <!-- A marker carries its stop's state because a Ranger with no labels
+             and no icons has no stop block to carry it instead. -->
         <li
           v-for="place in placed"
           :key="place.index"
           class="ranger__stop"
+          :data-disabled="place.stop.disabled === true ? '' : undefined"
           :style="{ '--ranger-stop-position': String(place.position) }"
         />
       </ul>
@@ -547,6 +550,7 @@ onBeforeUnmount(() => endDrag?.())
         :name="name"
         :disabled="isDisabled"
         :aria-valuetext="announced"
+        :aria-readonly="readonly ? 'true' : undefined"
         :min="range.min"
         :max="range.max"
         :step="range.step"
