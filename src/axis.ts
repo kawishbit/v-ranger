@@ -1,32 +1,5 @@
+import type { Diagnostic } from './diagnostics'
 import type { Stop } from './types'
-
-/**
- * Everything this module can complain about. A closed set, so a typo in a code
- * is a type error rather than a diagnostic nobody ever sees.
- */
-export type DiagnosticCode =
-  | 'no-axis'
-  | 'incomplete-range'
-  | 'invalid-step'
-  | 'numeric-stop-without-at'
-  | 'stop-outside-range'
-  | 'duplicate-stop-value'
-  | 'ordinal-stop-with-at'
-  | 'ordinal-stop-without-value'
-  | 'value-not-in-stops'
-  | 'value-out-of-range'
-  | 'value-off-step'
-
-/**
- * A complaint about the props or the value, returned as data rather than
- * written to the console, so this module stays pure and testable. `warn()` is
- * the only part that prints, and the only part stripped from production builds.
- */
-export interface Diagnostic {
-  code: DiagnosticCode
-  /** Index into the stops the consumer passed, where the complaint is about one. */
-  index?: number
-}
 
 interface AxisBase<V> {
   stops: Stop<V>[]
@@ -72,7 +45,7 @@ export interface Resolved<V> {
   /**
    * The stop closest to `position`, selected or not - what the thumb tint and
    * `aria-valuetext` fall back to between numeric ticks. `null` while unset, so
-   * an unanswered slider never presents a stop as the answer (ADR-0003).
+   * an unanswered Ranger never presents a stop as the answer (ADR-0003).
    */
   nearest: { stop: Stop<V>; index: number } | null
   /** Complaints about this value, as data. See `Diagnostic`. */
@@ -409,26 +382,4 @@ export function positionToValue<V>(
   )
 
   return reachable ? valueOf(reachable.stop) : from
-}
-
-/** Complaints already printed, so a re-render does not repeat itself. */
-const warned = new Set<string>()
-
-/**
- * The only impure part of this module, and the only part stripped from
- * production builds: `import.meta.env.DEV` folds to `false`, leaving the body
- * as dead code the bundler drops along with these strings.
- */
-export function warn(diagnostics: Diagnostic[]): void {
-  /* v8 ignore next -- the production path, verified by grepping the build */
-  if (!import.meta.env.DEV) return
-
-  for (const diagnostic of diagnostics) {
-    const key = `${diagnostic.code}:${diagnostic.index ?? ''}`
-    if (warned.has(key)) continue
-    warned.add(key)
-
-    const where = diagnostic.index === undefined ? '' : ` (stop ${diagnostic.index})`
-    console.warn(`[ranger] ${diagnostic.code}${where}`)
-  }
 }

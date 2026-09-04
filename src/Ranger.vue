@@ -21,9 +21,10 @@ import {
   positionToValue,
   resolve,
   resolveAxis,
-  warn,
   type Resolved,
 } from './axis'
+import { warn } from './diagnostics'
+import { resolveGradient, tintAt, type Gradient } from './gradients'
 import type { Stop } from './types'
 
 defineOptions({ name: 'Ranger', inheritAttrs: false })
@@ -43,6 +44,13 @@ const props = withDefaults(
     min?: number
     max?: number
     step?: number
+    /**
+     * A preset name, a list of colours, or any CSS gradient string. Left
+     * `undefined` rather than defaulting to `'mood'` in so many words: the
+     * stylesheet already paints mood, and not writing the token inline is what
+     * keeps a consumer's own `--ranger-gradient` working (ADR-0004).
+     */
+    gradient?: Gradient
     disabled?: boolean
     readonly?: boolean
     size?: 'sm' | 'md' | 'lg'
@@ -54,6 +62,7 @@ const props = withDefaults(
     min: undefined,
     max: undefined,
     step: undefined,
+    gradient: undefined,
     disabled: false,
     readonly: false,
     size: 'md',
@@ -90,10 +99,6 @@ const axis = computed(() =>
 
 const resolved = computed(() => resolve(axis.value, current.value))
 
-// Printing is the one thing the axis core will not do for itself, so that it
-// stays pure and its diagnostics stay assertable as data.
-watchEffect(() => warn([...axis.value.diagnostics, ...resolved.value.diagnostics]))
-
 // Nothing to choose from means nothing to drag, so the engine is disabled too
 // rather than being an empty control that still takes focus (spec §5.1).
 const isDisabled = computed(() => props.disabled || isEmptyAxis(axis.value))
@@ -111,11 +116,45 @@ const position = computed(() => engineToPosition(axis.value, engineValue.value))
 
 const placed = computed(() => placeStops(axis.value))
 
+/**
+ * The whole colour system, as two strings. Nothing here reaches for the DOM, so
+ * a Ranger is as colourful on the server as in the browser and no stylesheet is
+ * ever generated — the vlider bug ADR-0001 exists to kill.
+ */
+const gradient = computed(() =>
+  resolveGradient(
+    props.gradient,
+    placed.value.map((place) => ({ position: place.position, color: place.stop.color })),
+  ),
+)
+
+/**
+ * What the thumb tints to. Left unset while unset: there is no answer yet, so
+ * there is nothing to tint from (ADR-0003).
+ */
+const activeColor = computed(() =>
+  resolved.value.unset
+    ? undefined
+    : tintAt(gradient.value, position.value, resolved.value.nearest?.stop.color),
+)
+
+// Printing is the one thing the pure modules will not do for themselves, so
+// that they stay pure and their diagnostics stay assertable as data.
+watchEffect(() =>
+  warn([...axis.value.diagnostics, ...resolved.value.diagnostics, ...gradient.value.diagnostics]),
+)
+
 const engine = shallowRef<HTMLInputElement | null>(null)
 const dragging = shallowRef(false)
 
 const rootStyle = computed<StyleValue>(() => [
-  { '--ranger-position': String(position.value) },
+  {
+    '--ranger-position': String(position.value),
+    // Both omitted rather than written empty: an inline style beats every
+    // stylesheet, so a token nobody asked us to set stays the consumer's.
+    '--ranger-gradient': gradient.value.css ?? undefined,
+    '--ranger-active-color': activeColor.value,
+  },
   attrs.style as StyleValue,
 ])
 

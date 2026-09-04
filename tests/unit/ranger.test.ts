@@ -5,6 +5,7 @@ import { createSSRApp, h, nextTick } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Ranger } from '../../src/index'
+import { gradients, resolveGradient } from '../../src/gradients'
 
 const moods = [
   { value: 'angry', label: 'Angry' },
@@ -33,8 +34,13 @@ function engineOf(wrapper: Wrapper) {
   return wrapper.get('input[type="range"]').element as HTMLInputElement
 }
 
+/** One custom property off the root, exactly as the component wrote it. */
+function tokenOf(wrapper: Wrapper, name: string) {
+  return wrapper.element.getAttribute('style')?.match(new RegExp(`${name}:\\s*([^;]+)`))?.[1]
+}
+
 function positionOf(wrapper: Wrapper) {
-  return wrapper.element.getAttribute('style')?.match(/--ranger-position:\s*([^;]+)/)?.[1]
+  return tokenOf(wrapper, '--ranger-position')
 }
 
 beforeEach(() => {
@@ -444,6 +450,152 @@ describe('server rendering', () => {
   })
 })
 
+describe('colour', () => {
+  // `gradients.mood` is vlider's ramp; `gradients.test.ts` is where that claim
+  // is pinned against an independent copy of it. Here it is just the fixture.
+  const coloured = moods.map((stop, index) => ({ ...stop, color: gradients.mood[index] }))
+
+  it('leaves the gradient token to the stylesheet when nothing overrides it', () => {
+    const wrapper = mount(Ranger, { props: { stops: moods, modelValue: 'wow' } })
+
+    // Writing it inline would beat any stylesheet a consumer wrote, and the
+    // token is theirs to set (ADR-0004).
+    expect(tokenOf(wrapper, '--ranger-gradient')).toBeUndefined()
+  })
+
+  it('tints the thumb from the stop the thumb is on', () => {
+    const wrapper = mount(Ranger, { props: { stops: moods, modelValue: 'wow' } })
+
+    expect(tokenOf(wrapper, '--ranger-active-color')).toBe('#ff6bd6')
+  })
+
+  it('has nothing to tint from while unset, since nothing has been answered', () => {
+    const wrapper = mount(Ranger, { props: { stops: moods, modelValue: null } })
+
+    expect(tokenOf(wrapper, '--ranger-active-color')).toBeUndefined()
+  })
+
+  it('retints as the value moves', async () => {
+    const wrapper = mount(Ranger, { props: { stops: moods, modelValue: 'wow' } })
+
+    await wrapper.setProps({ modelValue: 'blush' })
+
+    expect(tokenOf(wrapper, '--ranger-active-color')).toBe('#fb3569')
+  })
+
+  it('takes a preset by name', () => {
+    const wrapper = mount(Ranger, { props: { stops: moods, gradient: 'ocean' } })
+
+    // What the resolver made of it, unchanged: this asserts the wiring, and
+    // `gradients.test.ts` asserts the string.
+    expect(tokenOf(wrapper, '--ranger-gradient')).toBe(resolveGradient('ocean', []).css)
+  })
+
+  it('takes a bare list of colours', () => {
+    const wrapper = mount(Ranger, { props: { stops: moods, gradient: ['red', 'blue'] } })
+
+    expect(tokenOf(wrapper, '--ranger-gradient')).toBe(
+      'linear-gradient(var(--ranger-gradient-direction, to right), red 0%, blue 100%)',
+    )
+  })
+
+  it('takes a CSS gradient string as it stands', () => {
+    const raw = 'linear-gradient(to top, red, blue)'
+    const wrapper = mount(Ranger, { props: { stops: moods, gradient: raw } })
+
+    expect(tokenOf(wrapper, '--ranger-gradient')).toBe(raw)
+  })
+
+  it('falls back to mood when the preset name is not one we ship, and says so', async () => {
+    // A fresh module, so the "already said that" memory in `warn` starts empty.
+    vi.resetModules()
+    const { Ranger: fresh } = await import('../../src/index')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const wrapper = mount(fresh, { props: { stops: moods, gradient: 'moood', modelValue: 'wow' } })
+
+    expect(warn.mock.calls.some(([message]) => String(message).includes('invalid-gradient'))).toBe(
+      true,
+    )
+    expect(tokenOf(wrapper, '--ranger-gradient')).toBeUndefined()
+    expect(tokenOf(wrapper, '--ranger-active-color')).toBe('#ff6bd6')
+  })
+
+  it('reproduces vlider exactly when every stop carries its own colour', () => {
+    const wrapper = mount(Ranger, { props: { stops: coloured } })
+
+    expect(tokenOf(wrapper, '--ranger-gradient')).toBe(
+      'linear-gradient(var(--ranger-gradient-direction, to right), ' +
+        '#ffc300 0%, #ffb0fe 20%, #ff6bd6 40%, #ff9d76 60%, #51eaea 80%, #fb3569 100%)',
+    )
+  })
+
+  it('keeps the preset around a single coloured tick rather than flattening the track', () => {
+    const wrapper = mount(Ranger, {
+      props: { min: 0, max: 100, stops: [{ at: 20, color: 'black' }, { at: 80 }] },
+    })
+
+    const painted = tokenOf(wrapper, '--ranger-gradient') ?? ''
+
+    // One tick with a colour is an override of one slice, not a new ramp: the
+    // other five mood colours are still there, and the track is not flat.
+    expect(painted).toContain('black 20%')
+    expect(painted).toContain('#ffc300 0%')
+    expect(painted).toContain('#fb3569 100%')
+  })
+
+  it('tints from a stop own colour where it has one', () => {
+    const stops = [{ value: 'a' }, { value: 'b', color: 'rebeccapurple' }, { value: 'c' }]
+    const wrapper = mount(Ranger, { props: { stops, modelValue: 'b' } })
+
+    expect(tokenOf(wrapper, '--ranger-active-color')).toBe('rebeccapurple')
+  })
+
+  it('mixes the tint between colours on a numeric axis, where stops are optional', () => {
+    const wrapper = mount(Ranger, { props: { min: 0, max: 100, step: 5, modelValue: 50 } })
+
+    // Half way along mood's six colours: between the third and the fourth.
+    expect(tokenOf(wrapper, '--ranger-active-color')).toBe(
+      'color-mix(in oklab, #ff6bd6 50%, #ff9d76)',
+    )
+  })
+
+  it('tints from the nearest stop when the ramp is CSS it cannot read', () => {
+    const stops = [{ value: 'a', color: 'red' }, { value: 'b' }]
+    const raw = 'linear-gradient(to top, red, blue)'
+
+    const known = mount(Ranger, { props: { stops, gradient: raw, modelValue: 'a' } })
+    const unknown = mount(Ranger, { props: { stops, gradient: raw, modelValue: 'b' } })
+
+    expect(tokenOf(known, '--ranger-active-color')).toBe('red')
+    expect(tokenOf(unknown, '--ranger-active-color')).toBeUndefined()
+  })
+
+  it('writes no stylesheet for any of it, whatever shape the gradient came in', () => {
+    const headBefore = document.head.innerHTML
+
+    mount(Ranger, { props: { stops: coloured } })
+    mount(Ranger, { props: { stops: moods, gradient: 'heat' } })
+    mount(Ranger, { props: { stops: moods, gradient: ['red', 'blue'] } })
+    mount(Ranger, { props: { stops: moods, gradient: 'linear-gradient(to top, red, blue)' } })
+
+    // The generated `<style id="rangeStyle{id}">` is what forced vlider's `id`
+    // prop and let two Rangers overwrite each other (ADR-0001).
+    expect(document.head.innerHTML).toBe(headBefore)
+  })
+
+  it('renders its colour on the server, where there is no stylesheet to consult', async () => {
+    const app = createSSRApp({
+      render: () => h(Ranger, { stops: coloured, modelValue: 'wow' }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('--ranger-active-color:#ff6bd6')
+    expect(html).toContain('#ffc300 0%')
+  })
+})
+
 describe('the stylesheet', () => {
   // Read from disk rather than imported: vitest stubs CSS imports out, and the
   // point of these three is the text of the stylesheet itself. Comments are
@@ -465,5 +617,26 @@ describe('the stylesheet', () => {
 
   it('takes the pointer away from the decorative nodes', () => {
     expect(css).toMatch(/pointer-events:\s*none/)
+  })
+
+  /** Whitespace is Prettier's to decide, so none of it is asserted. */
+  const squash = (text: string) => text.replace(/\s+/g, ' ').replace(/\s*([(),])\s*/g, '$1')
+
+  it('carries the same default ramp the resolver does, so the two cannot drift', () => {
+    // The default lives in both places on purpose: as a `var()` fallback the
+    // token stays overridable from a consumer's stylesheet, and the resolver
+    // still needs the colours to tint the thumb from. This is the seam.
+    const fallback = resolveGradient(gradients.mood, [])
+
+    expect(squash(css)).toContain(squash(`var(--ranger-gradient, ${fallback.css})`))
+  })
+
+  it('flips the ramp with the writing direction rather than shipping an RTL sheet', () => {
+    expect(squash(css)).toContain(squash('.ranger:dir(rtl) { --ranger-gradient-direction: to left'))
+  })
+
+  it('transitions the thumb tint, and stops when the reader asks it to', () => {
+    expect(css).toMatch(/transition:\s*background-color/)
+    expect(squash(css)).toContain(squash('@media (prefers-reduced-motion: reduce)'))
   })
 })

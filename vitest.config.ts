@@ -7,9 +7,10 @@ export default defineConfig({
   test: {
     coverage: {
       provider: 'v8',
-      // The axis core is the module issue 02 requires full branch coverage of;
-      // the component is covered by the browser project instead.
-      include: ['src/axis.ts'],
+      // The DOM-free modules, where the bugs live (spec §9) and where full
+      // branch coverage is cheap enough to insist on. The component is covered
+      // by the browser project instead.
+      include: ['src/axis.ts', 'src/diagnostics.ts', 'src/gradients.ts'],
       thresholds: { branches: 100, functions: 100, lines: 100, statements: 100 },
     },
     projects: [

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Ranger } from '../src/index'
+import { gradients, Ranger } from '../src/index'
 
 const moods = [
   { value: 'angry', label: 'Angry' },
@@ -10,6 +10,11 @@ const moods = [
   { value: 'okay', label: 'Okay?' },
   { value: 'blush', label: 'Blush' },
 ]
+
+const presets = Object.keys(gradients)
+
+/** What vlider's demo shipped, spelled the way a consumer would spell it now. */
+const vliderStops = moods.map((stop, index) => ({ ...stop, color: gradients.mood[index] }))
 
 const mood = ref<string | null>(null)
 const score = ref<number | null>(null)
@@ -62,6 +67,37 @@ function record(resolved: { value: unknown; index: number; position: number }) {
         ]"
         aria-label="Letters"
       />
+    </section>
+
+    <section>
+      <h2>Gradient presets</h2>
+      <div v-for="name in presets" :key="name">
+        <p>
+          <code>{{ name }}</code>
+        </p>
+        <Ranger :stops="moods" :gradient="name" :aria-label="name" />
+      </div>
+    </section>
+
+    <section>
+      <h2>The other two shapes, and per-stop colour</h2>
+      <p><code>:gradient="['#0ea5e9', '#22c55e']"</code></p>
+      <Ranger :stops="moods" :gradient="['#0ea5e9', '#22c55e']" aria-label="A list of colours" />
+
+      <p><code>gradient="linear-gradient(...)"</code> — any CSS gradient string</p>
+      <Ranger
+        :stops="moods"
+        gradient="linear-gradient(var(--ranger-gradient-direction), #111827, #6b7280 40%, #f9fafb)"
+        aria-label="A CSS gradient string"
+      />
+
+      <p><code>stop.color</code> on every stop — vlider's own ramp</p>
+      <Ranger :stops="vliderStops" aria-label="Per-stop colour" />
+    </section>
+
+    <section dir="rtl">
+      <h2>The same, right to left</h2>
+      <Ranger :stops="moods" aria-label="RTL" />
     </section>
 
     <section>

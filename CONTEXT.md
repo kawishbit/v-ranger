@@ -101,8 +101,12 @@ when the value falls between pinned stops.
 ### Nearest stop
 
 The stop closest to the current **position**. On an ordinal axis this is always the
-selected stop; on a numeric axis it usually isn't. Used for `aria-valuetext` and for
-tinting the thumb.
+selected stop; on a numeric axis it usually isn't. Used for `aria-valuetext`.
+
+The thumb's tint is read off the **gradient** at the thumb's position rather than off
+this stop. Where a nearest stop exists the two agree — the ramp carries that stop's
+colour at that stop's coordinate — and sampling also answers on a numeric axis with no
+stops at all, where "the nearest stop" has none.
 
 ### Unset
 

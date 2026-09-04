@@ -5,18 +5,31 @@
  *   1. Every visual value comes from a `--ranger-*` token. Tokens are public
  *      API, so this file only ever *reads* them — with an inline fallback, so a
  *      Ranger looks like something before issue 08 declares the surface and the
- *      size scale on the root.
+ *      size scale on the root. The single exception is
+ *      `--ranger-gradient-direction`, declared below because it is the one
+ *      thing only a stylesheet can know: which way the page runs.
  *   2. Logical properties only. No `left`, `right`, `margin-left`, ... so that
  *      RTL works today and vertical stays cheap.
  *
- * Colour, gradients and the thumb tint are issue 04's; the label and icon rows
- * that sit above and below the control are issue 05's.
+ * The label and icon rows that sit above and below the control are issue 05's.
  */
 
 .ranger {
+  /*
+   * The one thing a gradient cannot express logically: `to right` is physical,
+   * and there is no `to inline-end`. Naming the direction here rather than
+   * inside every generated ramp is what lets the component build its gradient
+   * on the server, where it cannot know which way the page runs.
+   */
+  --ranger-gradient-direction: to right;
+
   display: block;
   inline-size: 100%;
   font-family: var(--ranger-font, inherit);
+}
+
+.ranger:dir(rtl) {
+  --ranger-gradient-direction: to left;
 }
 
 /*
@@ -30,17 +43,43 @@
   min-block-size: var(--ranger-thumb-size, 1.25rem);
 }
 
+/*
+ * The ramp spans the whole track and is never squeezed by the value, which is
+ * how vlider looked and the reason the component is worth having. The default
+ * is a `var()` fallback rather than a declaration so that `--ranger-gradient`
+ * set anywhere above a Ranger still wins (ADR-0004); it is `mood`, colour for
+ * colour, and a test holds it to whatever `src/gradients.ts` says.
+ */
 .ranger__track {
   block-size: var(--ranger-track-height, 0.5rem);
   border-radius: var(--ranger-track-radius, 999px);
   background: var(--ranger-track-color, #e5e5e5);
+  background-image: var(
+    --ranger-gradient,
+    linear-gradient(
+      var(--ranger-gradient-direction, to right),
+      #ffc300 0%,
+      #ffb0fe 20%,
+      #ff6bd6 40%,
+      #ff9d76 60%,
+      #51eaea 80%,
+      #fb3569 100%
+    )
+  );
   overflow: hidden;
 }
 
+/*
+ * Paints nothing, and carries only its extent. A flat colour here would cover
+ * the half of the ramp the reader has already chosen from, and the ramp is the
+ * point. No token stands in for the colour it does not have: issue 08 owns the
+ * token surface, and inventing one here for a look nothing asks for would be
+ * inventing public API (ADR-0004).
+ */
 .ranger__fill {
   block-size: 100%;
   inline-size: calc(var(--ranger-position, 0) * 100%);
-  background: var(--ranger-active-color, #525252);
+  background: none;
 }
 
 .ranger__stops {
@@ -75,7 +114,7 @@
 
 /*
  * The travel is inset by half a thumb at each end, which is how a native range
- * input maps a value to an x and how every slider is drawn: the thumb sits
+ * input maps a value to an x and how every such control is drawn: the thumb sits
  * inside the track instead of overhanging it. Measured against Chromium, this
  * keeps the visible thumb within about 2px of the pointer instead of 8.
  *
@@ -95,6 +134,23 @@
   border: var(--ranger-thumb-ring-width, 2px) solid var(--ranger-thumb-border-color, #fff);
   border-radius: 50%;
   background: var(--ranger-thumb-color, var(--ranger-active-color, #525252));
+
+  /*
+   * The largest visual upgrade over vlider, where the thumb was `transparent`
+   * and could not have been anything else: a pseudo-element thumb is not
+   * reliably animatable (ADR-0001). `--ranger-active-color` is a colour, so the
+   * computed `background-color` interpolates when the value moves to a stop of
+   * a different colour - including through the `color-mix()` the ramp is
+   * sampled with between stops.
+   */
+  transition: background-color var(--ranger-transition, 160ms ease);
+}
+
+/* Spec §7: no transition at all for a reader who has asked for none. */
+@media (prefers-reduced-motion: reduce) {
+  .ranger__thumb {
+    transition: none;
+  }
 }
 
 /*

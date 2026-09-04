@@ -3,9 +3,10 @@ import Ranger from './Ranger.vue'
 
 export { Ranger }
 
-// Spec 4.6 fixes the public surface. `Gradient` and the `gradients` presets
-// join it with issue 04, which owns `src/gradients.ts`; the axis types stay
-// internal to the package until something outside it needs to name one.
+// Spec 4.6 fixes the public surface. The axis types stay internal to the
+// package until something outside it needs to name one.
+export { gradients } from './gradients'
+export type { Gradient } from './gradients'
 export type { Stop } from './types'
 export type { Resolved } from './axis'
 
