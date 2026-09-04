@@ -15,6 +15,7 @@ rejected alternatives are recorded in [`docs/adr/`](../../docs/adr/):
 - [ADR-0002](../../docs/adr/0002-inferred-ordinal-and-numeric-axes.md) — ordinal and numeric axes, inferred
 - [ADR-0003](../../docs/adr/0003-value-based-v-model-and-unset-state.md) — value-based `v-model`, `null` means unset
 - [ADR-0004](../../docs/adr/0004-css-custom-properties-over-sass.md) — CSS custom properties, no Sass
+- [ADR-0005](../../docs/adr/0005-token-defaults-as-var-fallbacks.md) — token defaults as `var()` fallbacks
 
 ## 1. Goals
 

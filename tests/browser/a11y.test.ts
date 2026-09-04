@@ -1,9 +1,10 @@
 import { mount } from '@vue/test-utils'
 import axe from 'axe-core'
-import { cdp, userEvent } from 'vitest/browser'
+import { userEvent } from 'vitest/browser'
 import { nextTick } from 'vue'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Ranger } from '../../src/index'
+import { emulate, flush, sentinel } from './harness'
 
 /**
  * Spec §7 is a hard requirement, and this is where it is held to one: a real
@@ -38,19 +39,11 @@ function host(style = ''): HTMLElement {
   return element
 }
 
-/**
- * A tab stop of its own, after whatever is mounted. Tabbing has to land
- * somewhere, and "somewhere" must not be the browser's own chrome: a test that
- * tabs out of the document takes the next test's focus with it.
- */
-function sentinel() {
-  const button = document.createElement('button')
-  button.type = 'button'
-  button.textContent = 'elsewhere'
-  document.body.append(button)
-  hosts.push(button)
+/** Registers a node for cleanup, so a sentinel never outlives its test. */
+function track<T extends HTMLElement>(element: T): T {
+  hosts.push(element)
 
-  return button
+  return element
 }
 
 function mountIn(into: HTMLElement, props: Record<string, unknown> = {}) {
@@ -85,10 +78,6 @@ async function tabTo(wrapper: ReturnType<typeof mount>) {
   await userEvent.tab({ shift: true })
 
   return engineOf(wrapper)
-}
-
-async function emulate(features: { name: string; value: string }[]) {
-  await cdp().send('Emulation.setEmulatedMedia', { features })
 }
 
 afterEach(async () => {
@@ -216,6 +205,8 @@ describe('the keyboard', () => {
     engineOf(ranger).focus()
 
     await userEvent.keyboard('{Home}')
+    await flush()
+
     for (let press = 1; press < moods.length; press += 1) await userEvent.keyboard('{ArrowRight}')
 
     expect(ranger.emitted('update:modelValue')?.map(([value]) => value)).toEqual(
@@ -223,14 +214,15 @@ describe('the keyboard', () => {
     )
   })
 
-  it('answers with the parked stop on the first press while unset', async () => {
+  it('answers with the parked stop when a key while unset moves nothing', async () => {
     const ranger = mountBound({ modelValue: null })
     engineOf(ranger).focus()
 
-    // The engine is parked at the start with nothing selected, so a key that
-    // would leave it there moves nothing and fires no `input` of its own.
+    // The engine is parked at its minimum with nothing selected, so a key
+    // asking for less moves nothing and fires no `input` at all — and without
+    // this, the first stop could not be chosen from the keyboard.
     await userEvent.keyboard('{ArrowLeft}')
-    await nextTick()
+    await flush()
 
     expect(ranger.emitted('update:modelValue')).toEqual([['angry']])
     expect(ranger.emitted('change')).toHaveLength(1)
@@ -240,6 +232,40 @@ describe('the keyboard', () => {
     await userEvent.keyboard('{ArrowRight}')
 
     expect(ranger.emitted('update:modelValue')?.at(-1)?.[0]).toBe('meh')
+  })
+
+  it('leaves a key the engine can act on entirely alone, unset or not', async () => {
+    const ranger = mountBound({ modelValue: null })
+    engineOf(ranger).focus()
+
+    // `End` means the far end, and it means it while unset too: the press is
+    // watched, never intercepted, so the platform's own answer stands.
+    await userEvent.keyboard('{End}')
+    await flush()
+
+    expect(ranger.emitted('update:modelValue')).toEqual([['blush']])
+    expect(engineOf(ranger).value).toBe('5')
+  })
+
+  it('steps rather than settling, on an unset numeric axis', async () => {
+    const ranger = mountBound({ stops: [], min: 0, max: 100, step: 5, modelValue: null })
+    engineOf(ranger).focus()
+
+    // The engine can move from its minimum here, so it does, and the value it
+    // produces is a step rather than the minimum it was parked on.
+    await userEvent.keyboard('{ArrowRight}')
+    await flush()
+
+    expect(ranger.emitted('update:modelValue')).toEqual([[5]])
+
+    // And the one key it cannot act on still answers with where it is parked.
+    const parked = mountBound({ stops: [], min: 20, max: 80, step: 5, modelValue: null })
+    engineOf(parked).focus()
+
+    await userEvent.keyboard('{Home}')
+    await flush()
+
+    expect(parked.emitted('update:modelValue')).toEqual([[20]])
   })
 
   it('skips a disabled stop rather than settling on it', async () => {
@@ -269,9 +295,9 @@ describe('the keyboard', () => {
   })
 
   it('is not reachable at all while disabled', async () => {
-    const before = sentinel()
+    const before = track(sentinel())
     const ranger = mountIn(host(), { modelValue: 'meh', disabled: true })
-    const after = sentinel()
+    const after = track(sentinel())
 
     before.focus()
     await userEvent.tab()
@@ -281,7 +307,7 @@ describe('the keyboard', () => {
   })
 
   it('is reachable but unchangeable while readonly', async () => {
-    const before = sentinel()
+    const before = track(sentinel())
     const ranger = mountBound({ modelValue: 'meh', readonly: true })
 
     before.focus()

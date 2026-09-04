@@ -105,6 +105,11 @@ describe('what a screen reader is told', () => {
     // A range input has role `slider`, so a browser reports `min`, `max` and
     // `value` as aria-valuemin/max/now on its own. Restating them would be a
     // second place for them to be wrong (ADR-0001).
+    //
+    // What this pins is our half — that the engine carries the right three
+    // numbers on both axes, and that nothing overwrites the browser's mapping.
+    // The mapping itself is the platform's, and `axe-core` reads the real
+    // accessibility tree over all five examples in the browser suite.
     const ordinal = engineOf(mount(Ranger, { props: { stops: moods, modelValue: 'wow' } }))
     const numeric = engineOf(
       mount(Ranger, { props: { min: 20, max: 80, step: 5, modelValue: 45 } }),

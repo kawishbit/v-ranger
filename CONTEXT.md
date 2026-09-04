@@ -140,6 +140,22 @@ A `--ranger-*` CSS custom property: the only supported way to restyle a Ranger. 
 no theme classes and no `theme` prop.
 See [ADR-0004](./docs/adr/0004-css-custom-properties-over-sass.md).
 
+### Size
+
+The `sm` / `md` / `lg` scale. It moves **geometry tokens** only — track height, thumb
+size, gap, label size, icon size — so a Ranger is the same colour at every size, and a
+consumer who sets those tokens directly beats it. Not a variant, not a theme: there is
+nothing a size does that a token cannot.
+See [ADR-0005](./docs/adr/0005-token-defaults-as-var-fallbacks.md).
+
+### Announcement
+
+What a screen reader reads out: the value of `aria-valuetext` on the **interaction
+engine**, built in `src/announce.ts` from the **axis** and the resolved value —
+"Astonished, 3 of 6", "Hot, 100", "No selection" while **unset**, and "unavailable" on a
+**stop** that cannot be chosen. The engine already announces a number; the announcement is
+the answer. Its words are the reader's rather than this glossary's, per the exemption below.
+
 ### Recipe
 
 A copy-pasteable block of **token** overrides published in the docs (the magenta look, a

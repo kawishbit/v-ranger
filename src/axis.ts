@@ -128,6 +128,12 @@ export function resolveAxis<V>(props: AxisProps<V>): Axis<V> {
       // the consumer hears about it.
       if (stop.at < min || stop.at > max) diagnostics.push({ code: 'stop-outside-range', index })
 
+      // A tick is decoration on a continuous range, and "the nearest enabled
+      // stop" has no meaning between two of them: `disabled` is honoured on an
+      // ordinal axis only (spec 5.2). Silently ignoring the flag would leave a
+      // consumer believing a value was blocked when nothing blocks it.
+      if (stop.disabled === true) diagnostics.push({ code: 'numeric-stop-disabled', index })
+
       pinned.push(stop)
     })
 

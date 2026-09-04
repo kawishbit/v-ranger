@@ -71,3 +71,30 @@ Publishing recipes (11).
 - **The spec §6 list is compared against every file in `src/`,** not only the stylesheet: the
   component writes five tokens as inline custom properties and those are public API too. CSS
   comments are stripped first, since an explanation is not a declaration.
+
+### After code review
+
+- **ADR-0005 now records the `var()` fallback decision.** The review was right that
+  "defaults are `var()` fallbacks" contradicts ADR-0004's "declared on the component root",
+  and that a CSS comment is not where a contradicted ADR gets answered (docs/agents/domain.md:
+  "flag ADR conflicts"). ADR-0005 amends that one sentence, keeps the rest of ADR-0004, and
+  states plainly what the remaining duplication costs.
+- **Each palette colour is now written once.** `--_light-*` and `--_dark-*` entries hold the
+  two palettes; the three scheme blocks only re-point the same eight aliases at one of them.
+  What is still duplicated is the *list of names*, which a test compares across all three
+  blocks — and the light block is now also held to matching the root's own defaults, which
+  the review noticed nothing was checking.
+- **The alias test is the grep test's missing half.** A literal can only live in a custom
+  property, so a grep for literals structurally cannot catch `--_touch-target: 24px`. The
+  alias test now names the two documented internals and the palette prefixes explicitly, and
+  everything else must read a public token — so a new hardcoded internal fails until someone
+  adds it to that list on purpose.
+- **Kept: the single-use aliases** (`--_track-radius`, `--_font`, `--_transition`, …). The
+  review called them Middle Man, and they are; the uniformity is the payoff. Inlining them
+  puts a fallback back at a use site and splits the list of defaults in two, which is the
+  thing ADR-0005 is about. Recorded there under Consequences rather than defended twice.
+- **Kept: the test reads spec §6 from `.scratch/`.** The coupling is the acceptance
+  criterion — "the token list in spec §6 matches the stylesheet exactly". When issue 11
+  publishes the token reference, this test should point at the published page instead.
+- **CONTEXT.md gained "Size"**, which the review flagged as vocabulary the glossary did not
+  have.

@@ -3,6 +3,7 @@ import { userEvent } from 'vitest/browser'
 import { nextTick } from 'vue'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Ranger } from '../../src/index'
+import { blockWithLabel } from './harness'
 import { clickOn } from './mouse'
 
 /**
@@ -43,21 +44,11 @@ function engineOf(ranger: ReturnType<typeof mount>) {
   return ranger.get('input[type="range"]').element as HTMLInputElement
 }
 
-/** The stop block for one stop, found the way a reader finds it: by its text. */
-function blockWithLabel(ranger: ReturnType<typeof mount>, label: string) {
-  const block = [...ranger.element.querySelectorAll('.ranger__stop-block')].find((candidate) =>
-    candidate.querySelector('.ranger__label')?.textContent?.includes(label),
-  )
-
-  if (!block) throw new Error(`no stop labelled ${label}`)
-  return block as HTMLElement
-}
-
 describe('click-to-jump', () => {
   it('moves the value to the clicked stop and commits it', async () => {
     const ranger = mountBound({ stops: moods, modelValue: 'angry' })
 
-    await userEvent.click(blockWithLabel(ranger, 'Astonished'))
+    await userEvent.click(blockWithLabel(ranger.element, 'Astonished'))
     await nextTick()
 
     expect(ranger.emitted('update:modelValue')).toEqual([['wow']])
@@ -69,7 +60,7 @@ describe('click-to-jump', () => {
 
   it('leaves focus on the engine rather than on the label that was clicked', async () => {
     const ranger = mountBound({ stops: moods, modelValue: 'angry' })
-    const block = blockWithLabel(ranger, 'Blush')
+    const block = blockWithLabel(ranger.element, 'Blush')
 
     await userEvent.click(block)
 
@@ -94,7 +85,7 @@ describe('click-to-jump', () => {
       modelValue: 'a',
     })
 
-    await clickOn(blockWithLabel(ranger, 'B'))
+    await clickOn(blockWithLabel(ranger.element, 'B'))
     await nextTick()
 
     expect(ranger.emitted('update:modelValue')).toBeUndefined()
@@ -105,7 +96,7 @@ describe('click-to-jump', () => {
   it('refuses the jump while readonly, but still hands focus to the engine', async () => {
     const ranger = mountBound({ stops: moods, modelValue: 'angry', readonly: true })
 
-    await userEvent.click(blockWithLabel(ranger, 'Blush'))
+    await userEvent.click(blockWithLabel(ranger.element, 'Blush'))
     await nextTick()
 
     expect(ranger.emitted('update:modelValue')).toBeUndefined()

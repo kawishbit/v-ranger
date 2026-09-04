@@ -195,6 +195,21 @@ describe('resolveAxis diagnostics', () => {
     ])
   })
 
+  it('flags a disabled tick, which a numeric axis cannot honour', () => {
+    // "The nearest enabled stop" has no meaning between two ticks on a
+    // continuous range, so `disabled` is an ordinal idea (spec §5.2). The flag
+    // is ignored — and saying so is the only way a consumer finds out that the
+    // value they thought they had blocked is not blocked at all.
+    const axis = resolveAxis({
+      min: 0,
+      max: 100,
+      stops: [{ at: 0 }, { at: 50, disabled: true }],
+    })
+
+    expect(axis.stops).toHaveLength(2)
+    expect(axis.diagnostics).toEqual([{ code: 'numeric-stop-disabled', index: 1 }])
+  })
+
   it('flags duplicate stop values, which make value lookup ambiguous', () => {
     const axis = resolveAxis({ stops: [{ value: 'a' }, { value: 'b' }, { value: 'a' }] })
 

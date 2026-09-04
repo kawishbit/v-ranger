@@ -35,11 +35,41 @@
   --_icon-size: var(--ranger-icon-size, 1.25rem);
 
   /*
-   * Colour. The gradient default is `mood`, colour for colour — the ramp the
-   * original shipped — and a test holds it to whatever `src/gradients.ts` says.
+   * The two palettes, each colour written exactly once. The scheme blocks below
+   * only re-point the aliases at one of them: the same eight colours have to be
+   * named by a media query and by a `data-theme` ancestor able to beat it, and
+   * two literal copies of a palette are two palettes waiting to disagree
+   * (ADR-0005).
    */
-  --_surface: var(--ranger-surface, #ffffff);
-  --_track-color: var(--ranger-track-color, #e5e5e5);
+  --_light-surface: #ffffff;
+  --_light-track: #e5e5e5;
+  --_light-thumb: #525252;
+  --_light-thumb-border: #ffffff;
+  --_light-label: #525252;
+  --_light-label-selected: #171717;
+  /*
+   * Near-black rather than an accent colour: the ring is drawn over the
+   * reader's own ramp, and only the extreme of the colour scheme clears every
+   * colour in the default one at 3:1 (spec §7). A consumer whose ramp defeats
+   * it sets the token.
+   */
+  --_light-focus: #171717;
+
+  --_dark-surface: #0a0a0a;
+  --_dark-track: #262626;
+  --_dark-thumb: #a3a3a3;
+  --_dark-thumb-border: #0a0a0a;
+  --_dark-label: #a3a3a3;
+  --_dark-label-selected: #fafafa;
+  --_dark-focus: #fafafa;
+
+  /*
+   * Colour, resolved light-first. The gradient default is `mood`, colour for
+   * colour — the ramp vlider shipped — and a test holds it to whatever
+   * `src/gradients.ts` says.
+   */
+  --_surface: var(--ranger-surface, var(--_light-surface));
+  --_track-color: var(--ranger-track-color, var(--_light-track));
   --_gradient: var(
     --ranger-gradient,
     linear-gradient(
@@ -52,20 +82,14 @@
       #fb3569 100%
     )
   );
-  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #525252));
-  --_thumb-border-color: var(--ranger-thumb-border-color, #ffffff);
-  --_label-color: var(--ranger-label-color, #525252);
-  --_label-color-selected: var(--ranger-label-color-selected, #171717);
-  /*
-   * Near-black rather than an accent colour: the ring is drawn over the
-   * reader's own ramp, and only the extreme of the colour scheme clears every
-   * colour in the default one at 3:1 (spec §7). A consumer whose ramp defeats
-   * it sets the token.
-   */
-  --_focus-color: var(--ranger-focus-color, #171717);
+  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_light-thumb)));
+  --_thumb-border-color: var(--ranger-thumb-border-color, var(--_light-thumb-border));
+  --_label-color: var(--ranger-label-color, var(--_light-label));
+  --_label-color-selected: var(--ranger-label-color-selected, var(--_light-label-selected));
+  --_focus-color: var(--ranger-focus-color, var(--_light-focus));
 
-  /* States. */
-  --_unset-track-color: var(--ranger-unset-track-color, #e5e5e5);
+  /* States. An unset track defaults to the track's own colour, flattened. */
+  --_unset-track-color: var(--ranger-unset-track-color, var(--_light-track));
   --_unset-opacity: var(--ranger-unset-opacity, 0.55);
   --_disabled-opacity: var(--ranger-disabled-opacity, 0.45);
   --_transition: var(--ranger-transition, 160ms ease);
@@ -73,7 +97,9 @@
   /*
    * Neither of these is a token, and deliberately. Spec §7's touch target is a
    * floor the WCAG sets, not a preference a consumer tunes; a stop's share of
-   * the track is an internal proportion, not public API (ADR-0004).
+   * the track is an internal proportion, not public API (ADR-0004). A test
+   * holds this list to exactly these two plus the palettes: any other internal
+   * carrying a literal is a value a consumer cannot reach.
    */
   --_touch-target: 24px;
   --_slice: calc(100% / var(--ranger-stop-count, 1));
@@ -127,50 +153,50 @@
 }
 
 /*
- * The dark default. Colour only, and exactly the eight names the explicit theme
- * below overrides, so the two can never drift into disagreeing about which
- * tokens a scheme owns. The ramp is not among them: it is the component's own
- * colour, and it reads on either surface.
+ * The dark default: the same eight aliases, pointed at the dark palette. The
+ * ramp is not among them — it is the component's own colour, and it reads on
+ * either surface.
  */
 @media (prefers-color-scheme: dark) {
   .ranger {
-    --_surface: var(--ranger-surface, #0a0a0a);
-    --_track-color: var(--ranger-track-color, #262626);
-    --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #a3a3a3));
-    --_thumb-border-color: var(--ranger-thumb-border-color, #0a0a0a);
-    --_label-color: var(--ranger-label-color, #a3a3a3);
-    --_label-color-selected: var(--ranger-label-color-selected, #fafafa);
-    --_focus-color: var(--ranger-focus-color, #fafafa);
-    --_unset-track-color: var(--ranger-unset-track-color, #262626);
+    --_surface: var(--ranger-surface, var(--_dark-surface));
+    --_track-color: var(--ranger-track-color, var(--_dark-track));
+    --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_dark-thumb)));
+    --_thumb-border-color: var(--ranger-thumb-border-color, var(--_dark-thumb-border));
+    --_label-color: var(--ranger-label-color, var(--_dark-label));
+    --_label-color-selected: var(--ranger-label-color-selected, var(--_dark-label-selected));
+    --_focus-color: var(--ranger-focus-color, var(--_dark-focus));
+    --_unset-track-color: var(--ranger-unset-track-color, var(--_dark-track));
   }
 }
 
 /*
- * An explicit ancestor beats the media query in both directions, by specificity
- * rather than by order, so a light island inside a dark page works as well as
- * the other way round. No theme class ships for it: `data-theme` is the
- * attribute pages already carry, and reading one is not shipping one.
+ * An explicit `data-theme` ancestor beats the media query in both directions, by
+ * specificity rather than by order, so a light island inside a dark page works
+ * as well as the other way round. Nothing ships for it but these two blocks:
+ * `data-theme` is an attribute pages already carry, and reading one is not the
+ * same as shipping the appearance behind it (ADR-0004, ADR-0005).
  */
 [data-theme='dark'] .ranger {
-  --_surface: var(--ranger-surface, #0a0a0a);
-  --_track-color: var(--ranger-track-color, #262626);
-  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #a3a3a3));
-  --_thumb-border-color: var(--ranger-thumb-border-color, #0a0a0a);
-  --_label-color: var(--ranger-label-color, #a3a3a3);
-  --_label-color-selected: var(--ranger-label-color-selected, #fafafa);
-  --_focus-color: var(--ranger-focus-color, #fafafa);
-  --_unset-track-color: var(--ranger-unset-track-color, #262626);
+  --_surface: var(--ranger-surface, var(--_dark-surface));
+  --_track-color: var(--ranger-track-color, var(--_dark-track));
+  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_dark-thumb)));
+  --_thumb-border-color: var(--ranger-thumb-border-color, var(--_dark-thumb-border));
+  --_label-color: var(--ranger-label-color, var(--_dark-label));
+  --_label-color-selected: var(--ranger-label-color-selected, var(--_dark-label-selected));
+  --_focus-color: var(--ranger-focus-color, var(--_dark-focus));
+  --_unset-track-color: var(--ranger-unset-track-color, var(--_dark-track));
 }
 
 [data-theme='light'] .ranger {
-  --_surface: var(--ranger-surface, #ffffff);
-  --_track-color: var(--ranger-track-color, #e5e5e5);
-  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #525252));
-  --_thumb-border-color: var(--ranger-thumb-border-color, #ffffff);
-  --_label-color: var(--ranger-label-color, #525252);
-  --_label-color-selected: var(--ranger-label-color-selected, #171717);
-  --_focus-color: var(--ranger-focus-color, #171717);
-  --_unset-track-color: var(--ranger-unset-track-color, #e5e5e5);
+  --_surface: var(--ranger-surface, var(--_light-surface));
+  --_track-color: var(--ranger-track-color, var(--_light-track));
+  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_light-thumb)));
+  --_thumb-border-color: var(--ranger-thumb-border-color, var(--_light-thumb-border));
+  --_label-color: var(--ranger-label-color, var(--_light-label));
+  --_label-color-selected: var(--ranger-label-color-selected, var(--_light-label-selected));
+  --_focus-color: var(--ranger-focus-color, var(--_light-focus));
+  --_unset-track-color: var(--ranger-unset-track-color, var(--_light-track));
 }
 
 /*
@@ -188,7 +214,7 @@
 
 /*
  * The ramp spans the whole track and is never squeezed by the value, which is
- * how the original looked and the reason the component is worth having.
+ * how vlider looked and the reason the component is worth having.
  */
 .ranger__track {
   block-size: var(--_track-height);
@@ -262,8 +288,8 @@
   background: var(--_thumb-color);
 
   /*
-   * The largest visual upgrade over the original, where the thumb was
-   * `transparent` and could not have been anything else: a pseudo-element thumb
+   * The largest visual upgrade over vlider, where the thumb was `transparent`
+   * and could not have been anything else: a pseudo-element thumb
    * is not reliably animatable (ADR-0001). `--ranger-active-color` is a colour,
    * so the computed `background-color` interpolates when the value moves to a
    * stop of a different colour — including through the `color-mix()` the ramp
@@ -388,7 +414,7 @@
 }
 
 /*
- * The selected label is the bold one in the original. Both halves are tokens,
+ * The selected label is the bold one in vlider. Both halves are tokens,
  * because "which stop is chosen" is exactly the kind of thing a consumer
  * restyles and there is no theme class to do it with (ADR-0004).
  */
@@ -408,8 +434,8 @@
 
 /*
  * Whatever the consumer put here: a unicode text node, an image, or a component.
- * Never a font — the original's demo silently required one, and goal 1 of the
- * spec is that a clean install looks like the screenshot.
+ * Never a font — vlider's demo silently required one, and goal 1 of the spec is
+ * that a clean install looks like the screenshot.
  */
 .ranger__icon {
   font-size: var(--_icon-size);

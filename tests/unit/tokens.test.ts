@@ -153,15 +153,29 @@ describe('the token surface', () => {
   it('resolves every internal alias through the public token first', () => {
     // The alias exists to write a default once, never to hide a value: if
     // `--_x` did not read `--ranger-x`, setting the token would do nothing.
-    const internal = parsed.flatMap((rule) =>
+    // Everything not on this list has to read a token, which is what stops a
+    // hardcoded value being smuggled in behind a private name — the one hole a
+    // grep for literals cannot see, since a custom property is where a default
+    // is allowed to live.
+    const internals = new Set(['--_touch-target', '--_slice'])
+    const palette = /^--_(light|dark)-/
+
+    const declared = parsed.flatMap((rule) =>
       rule.declarations.filter(({ property }) => property.startsWith('--_')),
     )
 
-    for (const { property, value } of internal) {
-      // The two documented internals, which stand for no token by design.
-      if (property === '--_touch-target' || property === '--_slice') continue
+    for (const { property, value } of declared) {
+      if (internals.has(property) || palette.test(property)) continue
 
       expect(value, `${property} does not read a token`).toMatch(/^var\(\s*--ranger-[a-z-]+\s*,/)
+    }
+
+    // And the palette itself is only ever a colour, never a size or a shape:
+    // the schemes own colour and nothing else.
+    for (const { property, value } of declared) {
+      if (!palette.test(property)) continue
+
+      expect(value, `${property} is not a colour`).toMatch(/^#[0-9a-f]{6}$/)
     }
   })
 
@@ -178,18 +192,36 @@ describe('the token surface', () => {
     }
   })
 
-  it('gives the dark scheme and an explicit dark theme the same tokens', () => {
-    // Two blocks say it because a media query and an ancestor selector cannot
-    // be combined without losing the specificity that lets the explicit one
-    // win (`@media` would flatten both to `.ranger`). Nothing stops the two
-    // drifting apart except this.
+  it('gives every scheme block the same tokens, whichever way it is asked for', () => {
+    // A media query and a `data-theme` ancestor cannot be combined without
+    // losing the specificity that lets the explicit one win, so the same eight
+    // aliases are re-pointed in three places. The colours behind them are
+    // written once, in the palette, but nothing except this stops the *lists*
+    // drifting apart (ADR-0005).
     const roots = parsed.filter((rule) => rule.selector === '.ranger')
     expect(roots, 'expected a root block and a dark-scheme one').toHaveLength(2)
 
     const properties = (rule: Rule) => rule.declarations.map(({ property }) => property)
-    const theme = parsed.find((rule) => /^\[data-theme=.dark.\] \.ranger$/.test(rule.selector))
+    const scheme = (name: string) =>
+      parsed.find((rule) =>
+        new RegExp(`^\\[data-theme=.${name}.\\] \\.ranger$`).test(rule.selector),
+      )
 
-    expect(theme).toBeDefined()
-    expect(properties(theme!)).toEqual(properties(roots[1]!))
+    const dark = scheme('dark')
+    const light = scheme('light')
+
+    expect(dark, 'no dark block').toBeDefined()
+    expect(light, 'no light block').toBeDefined()
+
+    // The media query and both ancestors: one list of names, three selectors.
+    expect(properties(dark!)).toEqual(properties(roots[1]!))
+    expect(properties(light!)).toEqual(properties(roots[1]!))
+
+    // And the light block says exactly what the root already resolved to, so
+    // `data-theme="light"` inside a dark page is the plain default again.
+    const rootDefaults = new Map(roots[0]!.declarations.map((d) => [d.property, d.value]))
+    for (const { property, value } of light!.declarations) {
+      expect(value, `${property} drifted from the default`).toBe(rootDefaults.get(property))
+    }
   })
 })

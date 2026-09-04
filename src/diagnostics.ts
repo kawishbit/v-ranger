@@ -14,6 +14,7 @@ export type DiagnosticCode =
   | 'invalid-step'
   | 'numeric-stop-without-at'
   | 'stop-outside-range'
+  | 'numeric-stop-disabled'
   | 'duplicate-stop-value'
   | 'ordinal-stop-with-at'
   | 'ordinal-stop-without-value'

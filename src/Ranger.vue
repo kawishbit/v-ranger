@@ -333,12 +333,11 @@ function isNamed(value: unknown): boolean {
  *
  * Checked on mount rather than in a `watchEffect`, because `labels` is a DOM
  * question — a wrapping `<label>` is not visible from the props — and asking it
- * during render would be asking it on the server.
+ * during render would be asking it on the server. Whether anyone hears about it
+ * is `warn`'s business, not this file's: the diagnostic is the finding, and
+ * `warn` is the only part that knows about production builds.
  */
 onMounted(() => {
-  /* v8 ignore next -- the production path, verified by grepping the build */
-  if (!import.meta.env.DEV) return
-
   const el = engine.value
   if (!el) return
 
@@ -368,10 +367,32 @@ function offer(next: V | number | null): boolean {
   return true
 }
 
+/**
+ * Moves to a position and commits it in one go: the two interactions the engine
+ * never sees for itself — a label click, and a key press the engine could not
+ * act on — and the only reason both need saying is that neither will produce
+ * the native `change` that `onChange` waits for.
+ */
+function commitAt(at: number) {
+  const next = positionToValue(axis.value, at, current.value)
+
+  // Nothing moved, so nothing to commit — the rule native `change` keeps.
+  if (!offer(next)) return
+
+  emit('change', resolve(axis.value, next))
+
+  void nextTick(syncEngine)
+}
+
+/** Whether the platform moved the engine, watched by the unset key check. */
+let engineMoved = false
+
 function onInput(event: Event) {
+  engineMoved = true
+
   // `readonly` displays a value and refuses to change it, so the engine is put
   // straight back where it was. Unlike `disabled` it stays focusable and
-  // announced - issue 07 owns the rest of the distinction.
+  // announced (issue 07).
   if (props.readonly) {
     void nextTick(syncEngine)
     return
@@ -399,36 +420,36 @@ const VALUE_KEYS = new Set([
 ])
 
 /**
- * The one thing the engine cannot do for us, because from its point of view
- * there is nothing to do: an unset Ranger parks it at the start with no value,
- * so `Home` and `ArrowLeft` move it nowhere, fire no `input`, and leave the
- * first stop unreachable from the keyboard. Spec §7 asks for a keyboard pass
- * that reaches every enabled stop, so this is where it gets one.
+ * The one gap the engine cannot close, because from its point of view there is
+ * nothing to do: an unset Ranger parks it at its minimum with no value, so
+ * `Home` — and `ArrowLeft` in a left-to-right page — move it nowhere, fire no
+ * `input`, and leave the first stop unreachable. Spec §7 asks for a keyboard
+ * pass that reaches every enabled stop, so this is where it gets one.
  *
- * The rule is uniform across the keys rather than clever: while unset, the
- * first press answers with the stop the thumb is parked on and goes no
- * further, and every press after that steps normally. Deciding per key which
- * way the engine *would* have moved would mean re-deriving the platform's own
- * arrow behaviour, which flips with the writing direction — the exact
- * duplication ADR-0001 exists to avoid. The cost is that `End` on an unanswered
- * Ranger chooses the first stop rather than the last, and has to be pressed
- * twice.
+ * The key is never intercepted, and which way each one moves an engine is never
+ * predicted: that is the platform's business, it flips with the writing
+ * direction, and re-deriving it is the duplication ADR-0001 exists to avoid.
+ * What happens instead is that the press is *watched*. If the engine moved,
+ * `onInput` has already answered and there is nothing to add; if the whole press
+ * produced no `input` at all, then it asked for less than the minimum, and the
+ * stop the thumb is parked on is the answer.
+ *
+ * A timeout rather than a microtask, because a microtask checkpoint runs
+ * between listeners — before the default action that would fire the `input`.
  */
 function onKeyDown(event: KeyboardEvent) {
   if (props.readonly || !resolved.value.unset) return
   if (!VALUE_KEYS.has(event.key) || event.altKey || event.ctrlKey || event.metaKey) return
 
-  event.preventDefault()
+  engineMoved = false
 
-  const next = positionToValue(axis.value, position.value, current.value)
-  if (!offer(next)) return
+  setTimeout(() => {
+    // Unmounted, already answered by the engine, or answered by something else
+    // in between: all three mean this press has nothing left to say.
+    if (engineMoved || !engine.value || !resolved.value.unset) return
 
-  // The engine never saw this one, so it will not fire the native `change`
-  // that `onChange` is waiting for — the same reason a label click commits
-  // itself.
-  emit('change', resolve(axis.value, next))
-
-  void nextTick(syncEngine)
+    commitAt(position.value)
+  })
 }
 
 /**
@@ -483,17 +504,7 @@ function jumpTo(block: StopBlock) {
   engine.value?.focus()
   if (props.readonly) return
 
-  const next = positionToValue(axis.value, block.place.position, current.value)
-
-  // Nothing moved, so nothing to commit — the rule native `change` keeps, and
-  // the one `onChange` keeps when no interaction produced a value.
-  if (!offer(next)) return
-
-  // A click is its own commit: the engine never saw this one, so it will not
-  // fire the native `change` that `onChange` is waiting for.
-  emit('change', resolve(axis.value, next))
-
-  void nextTick(syncEngine)
+  commitAt(block.place.position)
 }
 
 onBeforeUnmount(() => endDrag?.())

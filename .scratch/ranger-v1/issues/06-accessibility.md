@@ -100,3 +100,37 @@ typecheck and lint clean, the DOM-free modules still at 100% branch coverage.
   colour. The inner edge in the surface colour is what holds; a consumer whose ramp defeats
   the default sets `--ranger-focus-color`, which is exactly what the token is for.
 - **Visual regression snapshots stay out of scope**, as the ticket says.
+
+### After code review
+
+- **The unset key rule is now observed rather than predicted.** The old rule intercepted all
+  eight value keys while unset and committed the parked stop, so `End` chose the *first*
+  stop — and on a numeric axis `ArrowRight` committed the minimum instead of stepping off it,
+  which is worse and had no justification at all. `onKeyDown` now takes no key: it watches
+  the press, and only if the whole press produced no `input` does the parked stop become the
+  answer. Predicting which way a key moves an engine is what ADR-0001 says not to do, and
+  watching is how you avoid it. Three browser tests cover it: the key that moves nothing, the
+  key that moves (`End` reaches the last stop from unset), and the numeric axis stepping.
+- **`commitAt` now serves both interactions the engine never sees.** The review found
+  `onKeyDown`'s tail duplicated `jumpTo`'s verbatim.
+- **The DEV guard is gone from `onMounted`.** It duplicated `warn`'s, and `warn` is the one
+  part that is supposed to know about production builds; the check now produces a diagnostic
+  and lets `warn` decide whether anyone hears it.
+- **The `aria-valuemin`/`max`/`now` test says what it does and does not prove.** It pins our
+  half — the right three numbers on both axes, and nothing overwriting the browser's mapping.
+  A CDP read of the real accessibility node was tried and abandoned: the test page is an
+  iframe, and `Accessibility.getPartialAXTree` cannot be handed a node inside it without more
+  protocol plumbing than the claim is worth. `axe-core` already reads the real tree.
+- **Test helpers moved to `tests/browser/harness.ts`** — `sentinel`, `emulate`,
+  `blockWithLabel`, `flush` — following `mouse.ts`'s precedent. The mount lifecycles stay per
+  file: issue 09 owns the interaction matrix and the harness it wants.
+
+### Still open after review, and needing a decision
+
+- **Spec §7's "disabled stops are conveyed non-visually" is only partly met.** A reader hears
+  "unavailable" only when the value already sits on a disabled stop, and every interaction
+  path skips those — so the state is inferable (the position count jumps from "1 of 3" to
+  "3 of 3") but never announced. Announcing it properly wants `aria-describedby` on the
+  engine pointing at a visually hidden list, which needs a generated `id`; issue 03's suite
+  asserts a Ranger renders no `id` at all. Vue 3.5's `useId()` is SSR-safe and would do it,
+  but overturning that contract is the maintainer's call, not this ticket's.

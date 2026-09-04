@@ -12,6 +12,14 @@ const moods = [
 ]
 
 const presets = Object.keys(gradients)
+const sizes = ['sm', 'md', 'lg'] as const
+
+/** One stop nobody may choose, with the two either side of it enabled. */
+const gapped = [
+  { value: 'a', label: 'A', icon: '😠' },
+  { value: 'b', label: 'B', icon: '😑', disabled: true },
+  { value: 'c', label: 'C', icon: '😊' },
+]
 
 /** What vlider's demo shipped, spelled the way a consumer would spell it now. */
 const vliderStops = moods.map((stop, index) => ({ ...stop, color: gradients.mood[index] }))
@@ -140,6 +148,47 @@ function record(resolved: { value: unknown; index: number; position: number }) {
 
       <p><code>stop.color</code> on every stop — vlider's own ramp</p>
       <Ranger :stops="vliderStops" aria-label="Per-stop colour" />
+    </section>
+
+    <section>
+      <h2>The three sizes</h2>
+      <p>Geometry only, so the colour is the same at every one</p>
+      <div v-for="size in sizes" :key="size">
+        <p>
+          <code>size="{{ size }}"</code>
+        </p>
+        <Ranger :stops="moods" :size="size" model-value="wow" :aria-label="size" />
+      </div>
+    </section>
+
+    <section>
+      <h2>States</h2>
+      <p>Unset — a flat track and a parked, untinted thumb, not a neutral answer</p>
+      <Ranger :stops="moods" :model-value="null" aria-label="Unset" />
+
+      <p><code>disabled</code> — the whole Ranger dims and takes no input</p>
+      <Ranger :stops="moods" model-value="wow" disabled aria-label="Disabled" />
+
+      <p><code>readonly</code> — full strength, still focusable, refuses every change</p>
+      <Ranger :stops="moods" model-value="wow" readonly aria-label="Readonly" />
+
+      <p>One stop disabled — struck through, and skipped by key, drag and click</p>
+      <Ranger :stops="gapped" model-value="a" aria-label="One stop disabled" />
+    </section>
+
+    <section>
+      <h2>Tokens</h2>
+      <p>One token on an ancestor, no rebuild and no <code>!important</code></p>
+      <div style="--ranger-track-height: 1rem; --ranger-thumb-size: 2rem">
+        <Ranger :stops="moods" model-value="okay" aria-label="Retokened" />
+      </div>
+
+      <p>
+        An explicit <code>data-theme="dark"</code> island, beating whatever the page's scheme says
+      </p>
+      <div data-theme="dark" style="padding: 1rem; border-radius: 0.5rem; background: #0a0a0a">
+        <Ranger :stops="moods" model-value="okay" aria-label="Dark island" />
+      </div>
     </section>
 
     <section dir="rtl">

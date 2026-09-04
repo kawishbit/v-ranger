@@ -3,7 +3,8 @@ import { userEvent } from 'vitest/browser'
 import { nextTick } from 'vue'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Ranger } from '../../src/index'
-import { clickOn } from './mouse'
+import { blockWithLabel, sentinel } from './harness'
+import { clickOn, drag } from './mouse'
 
 /**
  * What unset, disabled and readonly *look* like, and the part of "a disabled
@@ -49,19 +50,11 @@ function mountBound(props: Record<string, unknown> = {}) {
 
 let sentinels: HTMLElement[] = []
 
-/**
- * A tab stop of its own, before or after a Ranger. Tabbing has to land
- * somewhere, and "somewhere" must not be the browser's own chrome: a test that
- * tabs out of the document takes the next test's focus with it.
- */
-function sentinel() {
-  const button = document.createElement('button')
-  button.type = 'button'
-  button.textContent = 'elsewhere'
-  document.body.append(button)
-  sentinels.push(button)
+/** Registers a node for cleanup, so a sentinel never outlives its test. */
+function track<T extends HTMLElement>(element: T): T {
+  sentinels.push(element)
 
-  return button
+  return element
 }
 
 afterEach(() => {
@@ -73,16 +66,6 @@ afterEach(() => {
 
 function styleOf(wrapper: ReturnType<typeof mount>, selector: string) {
   return getComputedStyle(wrapper.get(selector).element)
-}
-
-/** The stop block for one stop, found the way a reader finds it: by its text. */
-function blockWithLabel(wrapper: ReturnType<typeof mount>, label: string) {
-  const block = [...wrapper.element.querySelectorAll('.ranger__stop-block')].find((candidate) =>
-    candidate.querySelector('.ranger__label')?.textContent?.includes(label),
-  )
-
-  if (!block) throw new Error(`no stop labelled ${label}`)
-  return block as HTMLElement
 }
 
 describe('unset', () => {
@@ -139,13 +122,13 @@ describe('disabled', () => {
     const one = mountRanger({ stops: gapped })
 
     const root = Number(getComputedStyle(whole.element).opacity)
-    const block = Number(getComputedStyle(blockWithLabel(whole, 'B')).opacity)
+    const block = Number(getComputedStyle(blockWithLabel(whole.element, 'B')).opacity)
 
     // The root fade is already on everything below it, so the block does not
     // pay for it twice — and on its own it still fades.
     expect(block).toBe(1)
     expect(root).toBeLessThan(1)
-    expect(Number(getComputedStyle(blockWithLabel(one, 'B')).opacity)).toBe(root)
+    expect(Number(getComputedStyle(blockWithLabel(one.element, 'B')).opacity)).toBe(root)
   })
 
   it('says a stop is unavailable by more than its colour', () => {
@@ -154,19 +137,19 @@ describe('disabled', () => {
     // Spec §7: contrast alone may not carry meaning. The strike-through is the
     // visible half of it; `aria-valuetext` is the other.
     expect(
-      getComputedStyle(blockWithLabel(wrapper, 'B').querySelector('.ranger__label')!)
+      getComputedStyle(blockWithLabel(wrapper.element, 'B').querySelector('.ranger__label')!)
         .textDecorationLine,
     ).toBe('line-through')
 
     expect(
-      getComputedStyle(blockWithLabel(wrapper, 'A').querySelector('.ranger__label')!)
+      getComputedStyle(blockWithLabel(wrapper.element, 'A').querySelector('.ranger__label')!)
         .textDecorationLine,
     ).toBe('none')
   })
 
   it('refuses a real click on a disabled stop, and its cursor says so', async () => {
     const ranger = mountBound({ stops: gapped, modelValue: 'a' })
-    const block = blockWithLabel(ranger, 'B')
+    const block = blockWithLabel(ranger.element, 'B')
 
     expect(getComputedStyle(block).cursor).toBe('default')
 
@@ -176,10 +159,26 @@ describe('disabled', () => {
     expect(ranger.emitted('update:modelValue')).toBeUndefined()
   })
 
+  it('refuses a real drag onto a disabled stop, settling on the nearest enabled one', async () => {
+    const ranger = mountBound({ stops: gapped, modelValue: 'a' })
+    const engine = ranger.get('input[type="range"]').element as HTMLInputElement
+    const box = engine.getBoundingClientRect()
+    const y = box.y + box.height / 2
+
+    // Dragged to the middle, where the disabled stop is. A pointer can land
+    // anywhere along the track, so this is the case a click on a disabled
+    // button cannot cover: the engine really does move there first.
+    await drag({ x: box.x + 2, y }, { x: box.x + box.width / 2, y })
+    await nextTick()
+
+    expect(ranger.emitted('update:modelValue')).toEqual([['c']])
+    expect(engine.value).toBe('2')
+  })
+
   it('cannot be reached by the keyboard at all', async () => {
-    const before = sentinel()
+    const before = track(sentinel())
     const ranger = mountRanger({ modelValue: 'meh', disabled: true })
-    const after = sentinel()
+    const after = track(sentinel())
 
     before.focus()
     await userEvent.tab()
@@ -214,7 +213,7 @@ describe('readonly', () => {
   })
 
   it('still takes focus and still draws its focus ring', async () => {
-    const before = sentinel()
+    const before = track(sentinel())
     const ranger = mountRanger({ modelValue: 'meh', readonly: true })
 
     before.focus()

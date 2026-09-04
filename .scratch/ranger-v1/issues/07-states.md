@@ -76,3 +76,19 @@ including the declaration build.
   fix is `pointer-events: none` on the engine, which would also take the focus ring's
   `:focus-visible` route away from a pointer user; issue 09 owns the interaction matrix and is
   where that trade belongs.
+
+### After code review
+
+- **A disabled tick on a numeric axis is now a dev warning** (`numeric-stop-disabled`)
+  rather than a flag silently ignored. The review was right that "known limit" understated
+  it: a consumer who writes `{ at: 50, disabled: true }` believes 50 is blocked, and nothing
+  blocks it. Honouring the flag is still refused — "the nearest enabled stop" has no meaning
+  between two ticks on a continuous range — but now they are told.
+- **A real drag onto a disabled middle stop is covered**, with the CDP mouse rather than a
+  synthetic `input`: the pointer lands on the disabled stop, and the value settles on the
+  nearest enabled one. The pre-existing issue-03 drag test only covered "nothing enabled that
+  way".
+- **The light `data-theme` block is not scope creep**, but it was untested. Issue 08 asks for
+  the light default and the dark variant to be "both overridable by an explicit ancestor",
+  and beating a media query needs a selector; the test now holds the light block to the
+  root's own defaults.
