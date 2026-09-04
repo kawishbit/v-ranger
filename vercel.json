@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm install --prefix site && npm run build --prefix site",
+  "outputDirectory": "site/.vitepress/dist",
+  "cleanUrls": true,
+  "trailingSlash": false
+}

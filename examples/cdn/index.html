@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>v-ranger — CDN smoke test</title>
+    <!--
+      No build step: real installed packages, referenced by relative path,
+      the way a `<script src>` consumer with no bundler would reach a CDN.
+    -->
+    <link rel="stylesheet" href="./node_modules/v-ranger/dist/v-ranger.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script src="./node_modules/vue/dist/vue.global.prod.js"></script>
+    <script src="./node_modules/v-ranger/dist/v-ranger.umd.cjs"></script>
+    <script>
+      const { createApp, ref, h } = Vue
+      // The named export, not the plugin: the simpler and more common case
+      // for a page with exactly one Ranger and no global component registry
+      // (vite.config.ts's build note explains the `.default` alternative).
+      const { Ranger } = VRanger
+
+      const moods = [
+        { value: 'angry', label: 'Angry', icon: '😠' },
+        { value: 'meh', label: 'Meh', icon: '😑' },
+        { value: 'wow', label: 'Wow', icon: '😲' },
+      ]
+
+      createApp({
+        setup() {
+          const mood = ref(null)
+
+          return () =>
+            h('main', [
+              h('h1', 'v-ranger — CDN smoke test'),
+              h(Ranger, {
+                modelValue: mood.value,
+                'onUpdate:modelValue': (value) => {
+                  mood.value = value
+                },
+                stops: moods,
+                'aria-label': 'Mood',
+              }),
+            ])
+        },
+      }).mount('#app')
+    </script>
+  </body>
+</html>

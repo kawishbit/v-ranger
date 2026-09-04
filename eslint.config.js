@@ -5,7 +5,19 @@ import globals from 'globals'
 import ts from 'typescript-eslint'
 
 export default ts.config(
-  { ignores: ['dist/**', 'coverage/**', 'node_modules/**'] },
+  {
+    // `type-tests/` is fixtures for `vue-tsc`, not source; `bad.vue` fails on
+    // purpose. `examples/` and `site/` are their own standalone npm projects,
+    // each with a build and lint surface of their own.
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'node_modules/**',
+      'type-tests/**',
+      'examples/**',
+      'site/**',
+    ],
+  },
   js.configs.recommended,
   ts.configs.recommended,
   vue.configs['flat/recommended'],

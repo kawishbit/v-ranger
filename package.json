@@ -43,16 +43,28 @@
       "require": "./dist/v-ranger.umd.cjs"
     },
     "./style.css": "./dist/v-ranger.css",
+    "./full": {
+      "types": "./dist/full.d.ts",
+      "import": "./dist/full.js",
+      "require": "./dist/full.cjs"
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": [
-    "**/*.css"
+    "**/*.css",
+    "./dist/full.js",
+    "./dist/full.cjs"
   ],
   "scripts": {
     "dev": "vite",
     "build": "npm run build:js && npm run build:types",
-    "build:js": "vite build",
+    "build:js": "node scripts/build.mjs",
     "build:types": "vue-tsc -p tsconfig.build.json",
+    "verify:build": "node scripts/verify-build.mjs",
+    "verify:types": "node scripts/verify-types.mjs",
+    "verify:examples": "node examples/verify.mjs",
+    "verify:docs-drift": "node site/scripts/verify-drift.mjs",
+    "verify:docs-a11y": "node site/scripts/verify-a11y.mjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

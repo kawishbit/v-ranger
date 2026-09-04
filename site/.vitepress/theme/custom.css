@@ -1,0 +1,58 @@
+/**
+ * The component's own aesthetic, not default VitePress: the magenta `mood`
+ * ramp as the brand colour, and the same restrained, high-contrast type the
+ * component itself ships with (issue 11's landing-page requirement).
+ */
+:root {
+  /*
+   * A deep enough magenta that white button text on it still clears 4.5:1 —
+   * the same shade in light and dark, rather than the lighter `mood` tones,
+   * which look right as decoration but fail as an interactive colour. The
+   * ramp itself still shows up at full brightness in the hero name below and
+   * throughout the live examples on every page.
+   */
+  --vp-c-brand-1: #c2185b;
+  --vp-c-brand-2: #ad1457;
+  --vp-c-brand-3: #c2185b;
+  --vp-c-brand-soft: rgba(194, 24, 91, 0.14);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(
+    to right,
+    #ffc300,
+    #ffb0fe,
+    #ff6bd6,
+    #ff9d76,
+    #51eaea,
+    #fb3569
+  );
+}
+
+/* VitePress's own default is low-contrast against the code block background
+   (2.87:1, short of the 4.5:1 WCAG AA needs) — not this project's styling to
+   begin with, but a real reader hits it on every code sample on the site. */
+.vp-doc [class*='language-'] > span.lang {
+  color: var(--vp-c-text-1);
+}
+
+/* A live example, dropped into a page: the same surface a Ranger already
+   paints itself against, so it reads as part of the docs rather than a
+   floating widget. */
+.ranger-demo {
+  padding: 1.5rem 1.25rem;
+  margin: 1.5rem 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--vp-c-bg-soft);
+}
+
+.ranger-demo + .ranger-demo {
+  margin-top: 1rem;
+}
+
+.ranger-demo__value {
+  margin-top: 1rem;
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.85rem;
+  color: var(--vp-c-text-2);
+}
