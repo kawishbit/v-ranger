@@ -1,18 +1,83 @@
 /*
  * Plain CSS. No preprocessor, ever — see ADR-0004 under docs/adr/.
  *
- * Two rules this file lives under:
- *   1. Every visual value comes from a `--ranger-*` token. Tokens are public
- *      API, so this file only ever *reads* them — with an inline fallback, so a
- *      Ranger looks like something before issue 08 declares the surface and the
- *      size scale on the root. The single exception is
- *      `--ranger-gradient-direction`, declared below because it is the one
- *      thing only a stylesheet can know: which way the page runs.
+ * Three rules this file lives under:
+ *
+ *   1. Every visual value comes from a `--ranger-*` token, and every default
+ *      for one lives in the block below and nowhere else. A token is public
+ *      API (ADR-0004), so this file only ever *reads* one — which is why the
+ *      defaults are written as `var(--ranger-x, default)` rather than as
+ *      `--ranger-x: default`. A custom property declared on the root would beat
+ *      the same property set on an ancestor whatever its specificity, and
+ *      "override one token on an ancestor" is the whole restyling story.
+ *      The internal `--_x` alias each one resolves into is not public: it exists
+ *      so a default is written once instead of at every use site.
+ *
  *   2. Logical properties only. No `left`, `right`, `margin-left`, ... so that
  *      RTL works today and vertical stays cheap.
+ *
+ *   3. No theme classes and no `theme` prop. The default appearance is
+ *      theme-aware: light, a dark variant under `prefers-color-scheme: dark`,
+ *      and an explicit `[data-theme]` ancestor beating both (ADR-0004).
  */
 
 .ranger {
+  /* Geometry. This is `md`; `[data-size]` below re-resolves the five that scale. */
+  --_track-height: var(--ranger-track-height, 0.5rem);
+  --_track-radius: var(--ranger-track-radius, 999px);
+  --_thumb-size: var(--ranger-thumb-size, 1.25rem);
+  --_ring-width: var(--ranger-thumb-ring-width, 2px);
+  --_gap: var(--ranger-gap, 0.5rem);
+  --_font: var(--ranger-font, inherit);
+  --_label-size: var(--ranger-label-size, 0.8125rem);
+  --_label-weight: var(--ranger-label-weight, 400);
+  --_label-weight-selected: var(--ranger-label-weight-selected, 600);
+  --_icon-size: var(--ranger-icon-size, 1.25rem);
+
+  /*
+   * Colour. The gradient default is `mood`, colour for colour — the ramp the
+   * original shipped — and a test holds it to whatever `src/gradients.ts` says.
+   */
+  --_surface: var(--ranger-surface, #ffffff);
+  --_track-color: var(--ranger-track-color, #e5e5e5);
+  --_gradient: var(
+    --ranger-gradient,
+    linear-gradient(
+      var(--ranger-gradient-direction, to right),
+      #ffc300 0%,
+      #ffb0fe 20%,
+      #ff6bd6 40%,
+      #ff9d76 60%,
+      #51eaea 80%,
+      #fb3569 100%
+    )
+  );
+  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #525252));
+  --_thumb-border-color: var(--ranger-thumb-border-color, #ffffff);
+  --_label-color: var(--ranger-label-color, #525252);
+  --_label-color-selected: var(--ranger-label-color-selected, #171717);
+  /*
+   * Near-black rather than an accent colour: the ring is drawn over the
+   * reader's own ramp, and only the extreme of the colour scheme clears every
+   * colour in the default one at 3:1 (spec §7). A consumer whose ramp defeats
+   * it sets the token.
+   */
+  --_focus-color: var(--ranger-focus-color, #171717);
+
+  /* States. */
+  --_unset-track-color: var(--ranger-unset-track-color, #e5e5e5);
+  --_unset-opacity: var(--ranger-unset-opacity, 0.55);
+  --_disabled-opacity: var(--ranger-disabled-opacity, 0.45);
+  --_transition: var(--ranger-transition, 160ms ease);
+
+  /*
+   * Neither of these is a token, and deliberately. Spec §7's touch target is a
+   * floor the WCAG sets, not a preference a consumer tunes; a stop's share of
+   * the track is an internal proportion, not public API (ADR-0004).
+   */
+  --_touch-target: 24px;
+  --_slice: calc(100% / var(--ranger-stop-count, 1));
+
   /*
    * The one thing a gradient cannot express logically: `to right` is physical,
    * and there is no `to inline-end`. Naming the direction here rather than
@@ -31,11 +96,81 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   inline-size: 100%;
-  font-family: var(--ranger-font, inherit);
+  font-family: var(--_font);
 }
 
 .ranger:dir(rtl) {
   --ranger-gradient-direction: to left;
+}
+
+/*
+ * The size scale, and the whole of it: `size` moves geometry and nothing else,
+ * so a Ranger is the same colour at every size. Each still resolves the public
+ * token first, which is what "a consumer can ignore `size` and set the tokens
+ * directly" means — set `--ranger-thumb-size` anywhere above a Ranger and no
+ * size wins over it.
+ */
+.ranger[data-size='sm'] {
+  --_track-height: var(--ranger-track-height, 0.375rem);
+  --_thumb-size: var(--ranger-thumb-size, 1rem);
+  --_gap: var(--ranger-gap, 0.375rem);
+  --_label-size: var(--ranger-label-size, 0.75rem);
+  --_icon-size: var(--ranger-icon-size, 1rem);
+}
+
+.ranger[data-size='lg'] {
+  --_track-height: var(--ranger-track-height, 0.75rem);
+  --_thumb-size: var(--ranger-thumb-size, 1.5rem);
+  --_gap: var(--ranger-gap, 0.75rem);
+  --_label-size: var(--ranger-label-size, 0.9375rem);
+  --_icon-size: var(--ranger-icon-size, 1.5rem);
+}
+
+/*
+ * The dark default. Colour only, and exactly the eight names the explicit theme
+ * below overrides, so the two can never drift into disagreeing about which
+ * tokens a scheme owns. The ramp is not among them: it is the component's own
+ * colour, and it reads on either surface.
+ */
+@media (prefers-color-scheme: dark) {
+  .ranger {
+    --_surface: var(--ranger-surface, #0a0a0a);
+    --_track-color: var(--ranger-track-color, #262626);
+    --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #a3a3a3));
+    --_thumb-border-color: var(--ranger-thumb-border-color, #0a0a0a);
+    --_label-color: var(--ranger-label-color, #a3a3a3);
+    --_label-color-selected: var(--ranger-label-color-selected, #fafafa);
+    --_focus-color: var(--ranger-focus-color, #fafafa);
+    --_unset-track-color: var(--ranger-unset-track-color, #262626);
+  }
+}
+
+/*
+ * An explicit ancestor beats the media query in both directions, by specificity
+ * rather than by order, so a light island inside a dark page works as well as
+ * the other way round. No theme class ships for it: `data-theme` is the
+ * attribute pages already carry, and reading one is not shipping one.
+ */
+[data-theme='dark'] .ranger {
+  --_surface: var(--ranger-surface, #0a0a0a);
+  --_track-color: var(--ranger-track-color, #262626);
+  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #a3a3a3));
+  --_thumb-border-color: var(--ranger-thumb-border-color, #0a0a0a);
+  --_label-color: var(--ranger-label-color, #a3a3a3);
+  --_label-color-selected: var(--ranger-label-color-selected, #fafafa);
+  --_focus-color: var(--ranger-focus-color, #fafafa);
+  --_unset-track-color: var(--ranger-unset-track-color, #262626);
+}
+
+[data-theme='light'] .ranger {
+  --_surface: var(--ranger-surface, #ffffff);
+  --_track-color: var(--ranger-track-color, #e5e5e5);
+  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, #525252));
+  --_thumb-border-color: var(--ranger-thumb-border-color, #ffffff);
+  --_label-color: var(--ranger-label-color, #525252);
+  --_label-color-selected: var(--ranger-label-color-selected, #171717);
+  --_focus-color: var(--ranger-focus-color, #171717);
+  --_unset-track-color: var(--ranger-unset-track-color, #e5e5e5);
 }
 
 /*
@@ -48,41 +183,25 @@
   position: relative;
   display: grid;
   align-items: center;
-  min-block-size: var(--ranger-thumb-size, 1.25rem);
+  min-block-size: var(--_thumb-size);
 }
 
 /*
  * The ramp spans the whole track and is never squeezed by the value, which is
- * how vlider looked and the reason the component is worth having. The default
- * is a `var()` fallback rather than a declaration so that `--ranger-gradient`
- * set anywhere above a Ranger still wins (ADR-0004); it is `mood`, colour for
- * colour, and a test holds it to whatever `src/gradients.ts` says.
+ * how the original looked and the reason the component is worth having.
  */
 .ranger__track {
-  block-size: var(--ranger-track-height, 0.5rem);
-  border-radius: var(--ranger-track-radius, 999px);
-  background: var(--ranger-track-color, #e5e5e5);
-  background-image: var(
-    --ranger-gradient,
-    linear-gradient(
-      var(--ranger-gradient-direction, to right),
-      #ffc300 0%,
-      #ffb0fe 20%,
-      #ff6bd6 40%,
-      #ff9d76 60%,
-      #51eaea 80%,
-      #fb3569 100%
-    )
-  );
+  block-size: var(--_track-height);
+  border-radius: var(--_track-radius);
+  background-color: var(--_track-color);
+  background-image: var(--_gradient);
   overflow: hidden;
 }
 
 /*
  * Paints nothing, and carries only its extent. A flat colour here would cover
  * the half of the ramp the reader has already chosen from, and the ramp is the
- * point. No token stands in for the colour it does not have: issue 08 owns the
- * token surface, and inventing one here for a look nothing asks for would be
- * inventing public API (ADR-0004).
+ * point — so no token stands in for a colour it does not have.
  */
 .ranger__fill {
   block-size: 100%;
@@ -101,23 +220,21 @@
 
 /*
  * Markers travel on the same inset path as the thumb, so a tick and the thumb
- * that lands on it line up exactly. The marker size stays a literal `calc` on
- * the track height rather than a `--ranger-*` name: a token is public API, and
- * this is an internal proportion nobody should be pinning to (ADR-0004).
+ * that lands on it line up exactly. The marker size stays a proportion of the
+ * track rather than a token of its own: it is internal (ADR-0004).
  */
 .ranger__stop {
   position: absolute;
   inset-block-start: 50%;
   inset-inline-start: calc(
-    var(--ranger-thumb-size, 1.25rem) / 2 + var(--ranger-stop-position, 0) *
-      (100% - var(--ranger-thumb-size, 1.25rem))
+    var(--_thumb-size) / 2 + var(--ranger-stop-position, 0) * (100% - var(--_thumb-size))
   );
-  inline-size: calc(var(--ranger-track-height, 0.5rem) / 2);
-  block-size: calc(var(--ranger-track-height, 0.5rem) / 2);
-  margin-block-start: calc(var(--ranger-track-height, 0.5rem) / -4);
-  margin-inline-start: calc(var(--ranger-track-height, 0.5rem) / -4);
+  inline-size: calc(var(--_track-height) / 2);
+  block-size: calc(var(--_track-height) / 2);
+  margin-block-start: calc(var(--_track-height) / -4);
+  margin-inline-start: calc(var(--_track-height) / -4);
   border-radius: 50%;
-  background: var(--ranger-surface, #fff);
+  background: var(--_surface);
 }
 
 /*
@@ -134,49 +251,45 @@
   display: grid;
   place-items: center;
   inset-inline-start: calc(
-    var(--ranger-thumb-size, 1.25rem) / 2 + var(--ranger-position, 0) *
-      (100% - var(--ranger-thumb-size, 1.25rem))
+    var(--_thumb-size) / 2 + var(--ranger-position, 0) * (100% - var(--_thumb-size))
   );
   box-sizing: border-box;
-  inline-size: var(--ranger-thumb-size, 1.25rem);
-  block-size: var(--ranger-thumb-size, 1.25rem);
-  margin-inline-start: calc(var(--ranger-thumb-size, 1.25rem) / -2);
-  border: var(--ranger-thumb-ring-width, 2px) solid var(--ranger-thumb-border-color, #fff);
+  inline-size: var(--_thumb-size);
+  block-size: var(--_thumb-size);
+  margin-inline-start: calc(var(--_thumb-size) / -2);
+  border: var(--_ring-width) solid var(--_thumb-border-color);
   border-radius: 50%;
-  background: var(--ranger-thumb-color, var(--ranger-active-color, #525252));
+  background: var(--_thumb-color);
 
   /*
-   * The largest visual upgrade over vlider, where the thumb was `transparent`
-   * and could not have been anything else: a pseudo-element thumb is not
-   * reliably animatable (ADR-0001). `--ranger-active-color` is a colour, so the
-   * computed `background-color` interpolates when the value moves to a stop of
-   * a different colour - including through the `color-mix()` the ramp is
-   * sampled with between stops.
+   * The largest visual upgrade over the original, where the thumb was
+   * `transparent` and could not have been anything else: a pseudo-element thumb
+   * is not reliably animatable (ADR-0001). `--ranger-active-color` is a colour,
+   * so the computed `background-color` interpolates when the value moves to a
+   * stop of a different colour — including through the `color-mix()` the ramp
+   * is sampled with between stops.
    */
-  transition: background-color var(--ranger-transition, 160ms ease);
-}
-
-/* Spec §7: no transition at all for a reader who has asked for none. */
-@media (prefers-reduced-motion: reduce) {
-  .ranger__thumb {
-    transition: none;
-  }
+  transition: background-color var(--_transition);
 }
 
 /*
  * The engine is invisible, so its focus ring has to be drawn out here or a
- * keyboard user gets none at all - the direct consequence of `opacity: 0` that
- * ADR-0001 calls out. Issue 06 owns proving the contrast meets AA and setting
- * the token's default; this is the wiring, so no intermediate state ships
- * without a focus indicator.
+ * keyboard user gets none at all — the direct consequence of `opacity: 0` that
+ * ADR-0001 calls out.
+ *
+ * The box-shadow is not decoration: it paints the ring's inner edge in the
+ * surface colour, so whatever the ring is drawn over — a slice of the reader's
+ * own ramp, whose colour we cannot know — there is a known colour beside it,
+ * and the 3:1 the focus token is chosen for holds where the ring crosses the
+ * track (spec §7).
  *
  * `:has()` rather than a sibling combinator, so the ring does not depend on the
- * engine and the thumb staying adjacent once issue 05 inserts the label and
- * icon rows.
+ * engine and the thumb staying adjacent.
  */
 .ranger__control:has(.ranger__engine:focus-visible) .ranger__thumb {
-  outline: var(--ranger-thumb-ring-width, 2px) solid var(--ranger-focus-color, #2563eb);
-  outline-offset: var(--ranger-thumb-ring-width, 2px);
+  outline: var(--_ring-width) solid var(--_focus-color);
+  outline-offset: var(--_ring-width);
+  box-shadow: 0 0 0 var(--_ring-width) var(--_surface);
 }
 
 /*
@@ -218,25 +331,22 @@
  * nothing has to be measured; each is then pushed along the same inset path the
  * thumb travels, so a label and the thumb that lands on it line up.
  *
- * `--slice` is deliberately not a `--ranger-*` name: tokens are public API and
- * this is an internal proportion (ADR-0004). One slice of the track wide is what
- * makes a long label wrap rather than run into its neighbour. Where a slice
- * would fall below spec §7's 24px touch target the target wins and neighbouring
- * blocks begin to meet: an unreachable control is the worse failure.
+ * One slice of the track wide is what makes a long label wrap rather than run
+ * into its neighbour. Where a slice would fall below spec §7's touch target the
+ * target wins and neighbouring blocks begin to meet: an unreachable control is
+ * the worse failure.
  */
 .ranger__stop-block {
-  --slice: calc(100% / var(--ranger-stop-count, 1));
-
   grid-column: 1;
   justify-self: start;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--ranger-gap, 0.5rem) / 2);
+  gap: calc(var(--_gap) / 2);
   box-sizing: border-box;
-  inline-size: var(--slice);
-  min-inline-size: 24px;
-  min-block-size: 24px;
+  inline-size: var(--_slice);
+  min-inline-size: var(--_touch-target);
+  min-block-size: var(--_touch-target);
   /*
    * Centred on the stop, then clamped inside the component. Without the clamp a
    * block at either end hangs half its own width outside the Ranger, where a
@@ -246,9 +356,9 @@
    */
   margin-inline-start: clamp(
     0px,
-    var(--ranger-thumb-size, 1.25rem) / 2 + var(--ranger-stop-position, 0) *
-      (100% - var(--ranger-thumb-size, 1.25rem)) - var(--slice) / 2,
-    100% - var(--slice)
+    var(--_thumb-size) / 2 + var(--ranger-stop-position, 0) * (100% - var(--_thumb-size)) -
+      var(--_slice) / 2,
+    100% - var(--_slice)
   );
   padding: 0;
   border: 0;
@@ -264,13 +374,13 @@
   /* Pinned to the track rather than floated in the row, so a label that wraps
      to two lines grows away from the track instead of pushing off it. */
   align-self: end;
-  padding-block-end: var(--ranger-gap, 0.5rem);
+  padding-block-end: var(--_gap);
 }
 
 .ranger__stop-block[data-side='below'] {
   grid-row: 3;
   align-self: start;
-  padding-block-start: var(--ranger-gap, 0.5rem);
+  padding-block-start: var(--_gap);
 }
 
 .ranger__stop-block:disabled {
@@ -283,33 +393,45 @@
  * restyles and there is no theme class to do it with (ADR-0004).
  */
 .ranger__label {
-  color: var(--ranger-label-color, #525252);
-  font-size: var(--ranger-label-size, 0.8125rem);
-  font-weight: var(--ranger-label-weight, 400);
+  color: var(--_label-color);
+  font-size: var(--_label-size);
+  font-weight: var(--_label-weight);
   line-height: 1.25;
   /* A word longer than its slice breaks rather than overlapping a neighbour. */
   overflow-wrap: anywhere;
 }
 
 .ranger__stop-block[data-selected] .ranger__label {
-  color: var(--ranger-label-color-selected, #171717);
-  font-weight: var(--ranger-label-weight-selected, 600);
+  color: var(--_label-color-selected);
+  font-weight: var(--_label-weight-selected);
 }
 
 /*
  * Whatever the consumer put here: a unicode text node, an image, or a component.
- * Never a font — vlider's demo silently required one, and goal 1 of the spec is
- * that a clean install looks like the screenshot.
+ * Never a font — the original's demo silently required one, and goal 1 of the
+ * spec is that a clean install looks like the screenshot.
  */
 .ranger__icon {
-  font-size: var(--ranger-icon-size, 1.25rem);
+  font-size: var(--_icon-size);
   line-height: 1;
 }
 
 .ranger__icon img {
   display: block;
   inline-size: auto;
-  block-size: var(--ranger-icon-size, 1.25rem);
+  block-size: var(--_icon-size);
   max-inline-size: 100%;
   object-fit: contain;
+}
+
+/*
+ * Spec §7: no transition anywhere for a reader who has asked for none, rather
+ * than only on the properties this file happens to animate today. Last in the
+ * file, so it wins on order against the equal specificity of `.ranger *`.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .ranger,
+  .ranger * {
+    transition: none;
+  }
 }
