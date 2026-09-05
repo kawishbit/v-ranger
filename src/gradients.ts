@@ -4,7 +4,7 @@ import type { Diagnostic } from './diagnostics'
  * Colour, expressed separately from data (ADR-0004). Nothing here touches the
  * DOM or a stylesheet: the whole module is string arithmetic over a ramp, and
  * its one output is the value of `--ranger-gradient` on the component root.
- * That is what removed vlider's generated `<style>` element, and with it the
+ * That is what removed the predecessor's generated `<style>` element, and with it the
  * `id` prop and the global-state bug behind it (ADR-0001).
  */
 
@@ -13,7 +13,7 @@ export type Gradient = string | string[]
 
 /**
  * The ramps that ship with the package, so a Ranger is colourful with no
- * configuration. `mood` is vlider's own demo ramp, colour for colour, so the
+ * configuration. `mood` is the predecessor's own demo ramp, colour for colour, so the
  * component people recognise is still the one they get by default.
  */
 export const gradients = {
@@ -219,7 +219,7 @@ function byPosition(ramp: readonly RampStop[]): RampStop[] {
  * are wanted:
  *
  * - A colour on **every** stop is a ramp in its own right, and becomes the
- *   whole ramp. That is what reproduces vlider's exact ramp, at any number of
+ *   whole ramp. That is what reproduces the predecessor's exact ramp, at any number of
  *   stops rather than only at the six the `mood` preset happens to have.
  * - A colour on **some** stops overrides those slices of the preset and leaves
  *   the rest of it alone. Rebuilding the ramp from the stops instead would let

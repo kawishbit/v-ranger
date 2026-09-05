@@ -1,8 +1,7 @@
 # v-ranger
 
-A colourful, emotive Ranger for Vue 3. Reproduces the gradient-track, labelled,
-emoji-iconed look of [vlider](https://github.com/kawishbit/vlider) — same idea, clean-break
-API — and works as a plain numeric Ranger too.
+A colourful, emotive Ranger for Vue 3, with a gradient-track, labelled, emoji-iconed look —
+and works as a plain numeric Ranger too.
 
 - Real keyboard, pointer, touch and screen-reader support, from a native
   `<input type="range">` under the hood.
@@ -117,13 +116,13 @@ Neither fires on mount, on a prop change, or on any render.
 
 `gradient` takes a preset name, a bare colour array, or any CSS gradient string:
 
-| Preset   | Ramp                                                                               |
-| -------- | ---------------------------------------------------------------------------------- |
-| `mood`   | `#ffc300 #ffb0fe #ff6bd6 #ff9d76 #51eaea #fb3569` (the default; vlider's own ramp) |
-| `sunset` | `#ffcf70 #ff9f5a #ff6f61 #c94b8c #5f2c82`                                          |
-| `ocean`  | `#0b3d91 #1268b3 #2196c9 #4fc3d9 #a8e6ea`                                          |
-| `heat`   | `#1b1464 #7b2cbf #e63946 #f77f00 #ffd60a`                                          |
-| `mono`   | `#e5e7eb #9ca3af #4b5563 #111827`                                                  |
+| Preset   | Ramp                                                            |
+| -------- | --------------------------------------------------------------- |
+| `mood`   | `#ffc300 #ffb0fe #ff6bd6 #ff9d76 #51eaea #fb3569` (the default) |
+| `sunset` | `#ffcf70 #ff9f5a #ff6f61 #c94b8c #5f2c82`                       |
+| `ocean`  | `#0b3d91 #1268b3 #2196c9 #4fc3d9 #a8e6ea`                       |
+| `heat`   | `#1b1464 #7b2cbf #e63946 #f77f00 #ffd60a`                       |
+| `mono`   | `#e5e7eb #9ca3af #4b5563 #111827`                               |
 
 `gradients` is exported so you can read or extend them:
 
@@ -132,8 +131,8 @@ import { gradients } from 'v-ranger'
 ```
 
 A stop's own `color` overrides its slice of the ramp — put a `color` on every stop and
-you get vlider's exact per-stop look. The thumb tints to whatever colour the ramp carries
-at its own position, and transitions between stops.
+each one carries its own colour outright. The thumb tints to whatever colour the ramp
+carries at its own position, and transitions between stops.
 
 ## Tokens
 
@@ -213,17 +212,6 @@ export default defineNuxtConfig({
   ramp) clears WCAG's 3:1 non-text contrast at every size.
 - A disabled stop is never marked by colour alone — its label is struck through too.
 - `prefers-reduced-motion: reduce` turns off every transition, not just the thumb's.
-
-## Migrating from vlider
-
-| vlider                     | v-ranger                                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------------------- |
-| `vliderData` prop          | `stops` prop                                                                                    |
-| `id` prop                  | Removed — nothing to disambiguate; two Rangers on one page never interfered in the first place. |
-| Selection by 1-based index | Selection by the stop's own `value`, through `v-model`                                          |
-| `theme` prop               | `--ranger-*` tokens, set from any ancestor                                                      |
-| Per-item `extras`          | Whatever else you put on the stop object itself                                                 |
-| `#bullet` slot             | `#stop` slot (scope: `{ stop, index, selected, disabled, position }`)                           |
 
 ## Playground
 

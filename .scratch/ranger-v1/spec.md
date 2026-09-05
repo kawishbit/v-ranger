@@ -5,8 +5,7 @@ Owner: kawishbit
 Date: 2026-09-04
 
 A colourful, emotive range slider for Vue 3, published to npm as **`v-ranger`**. Successor
-to [vlider](https://github.com/kawishbit/vlider) in idea and visual design only — the API is
-a clean break.
+to the predecessor project in idea and visual design only — the API is a clean break.
 
 Vocabulary in this document is defined in [`CONTEXT.md`](../../CONTEXT.md). Decisions with
 rejected alternatives are recorded in [`docs/adr/`](../../docs/adr/):
@@ -19,7 +18,7 @@ rejected alternatives are recorded in [`docs/adr/`](../../docs/adr/):
 
 ## 1. Goals
 
-1. Reproduce the vlider look — gradient track, labels above, emoji icons below — **on a clean install, with no extra dependencies**. vlider's demo silently required an external emoji font; ours must not.
+1. Reproduce the predecessor's look — gradient track, labels above, emoji icons below — **on a clean install, with no extra dependencies**. The predecessor's demo silently required an external emoji font; ours must not.
 2. Be a genuinely good slider: WCAG 2.2 AA, real keyboard support, real screen-reader output, RTL, SSR-safe.
 3. Be restyleable without a build step. One CSS custom property, not a Sass toolchain.
 4. Be a plain numeric slider too, when asked.
@@ -180,8 +179,8 @@ Labels and icons are clickable and jump the thumb to their stop, then return foc
 ### 5.4 Colour
 
 - `gradient` becomes a `linear-gradient` on the track, in the writing direction (flipped under RTL).
-- A stop's `color` overrides its slice — an ordinal axis with a `color` on every stop reproduces vlider's per-stop ramp exactly.
-- The thumb tints to the colour the ramp carries at its own position — the nearest stop's colour wherever there is one — via `color-mix()`, and transitions between stops. This is the largest visual upgrade over vlider, where the thumb was `transparent`.
+- A stop's `color` overrides its slice — an ordinal axis with a `color` on every stop reproduces the predecessor's per-stop ramp exactly.
+- The thumb tints to the colour the ramp carries at its own position — the nearest stop's colour wherever there is one — via `color-mix()`, and transitions between stops. This is the largest visual upgrade over the predecessor, where the thumb was `transparent`.
 - Presets: `mood` (the magenta scale from the original), `sunset`, `ocean`, `heat`, `mono`.
 
 ## 6. Tokens
@@ -208,7 +207,7 @@ WCAG 2.2 AA. Non-negotiable, and the reason for ADR-0001.
 - `:focus-visible` on the engine draws a visible ring on the thumb, meeting AA non-text contrast against the track and the surface.
 - Colour is never the sole carrier of meaning: every stop has a label or an accessible name, and `aria-valuetext` never depends on colour.
 - Touch targets for clickable labels and icons are at least 24×24 CSS px.
-- `prefers-reduced-motion: reduce` disables all transitions. vlider hardcoded `transition: all 400ms`.
+- `prefers-reduced-motion: reduce` disables all transitions. The predecessor hardcoded `transition: all 400ms`.
 - Images get an `alt` defaulting to the stop's label; decorative-only presentation-layer nodes are `aria-hidden` with `pointer-events: none`.
 - Disabled stops are conveyed non-visually, not by opacity alone.
 
@@ -218,7 +217,7 @@ WCAG 2.2 AA. Non-negotiable, and the reason for ADR-0001.
 - Types via `vue-tsc`, verified so consumers get prop, emit and slot inference.
 - `exports`: `.` (ESM + UMD + types), `./style.css`, `./full` (imports the CSS for zero-config use).
 - `sideEffects` set so the CSS is never tree-shaken away and the JS is.
-- `files`: `dist/` + `README.md` + `LICENSE`. **No `src/**`** — vlider shipped source only because the SCSS had to be compiled downstream.
+- `files`: `dist/` + `README.md` + `LICENSE`. **No `src/**`** — the predecessor shipped source only because the SCSS had to be compiled downstream.
 - MIT, `"type": "module"`.
 
 ## 9. Testing
@@ -233,7 +232,7 @@ WCAG 2.2 AA. Non-negotiable, and the reason for ADR-0001.
 
 VitePress in `site/`, importing the library by relative path. Deployed on **Vercel** at a `kawishbit.com` subdomain (`ranger.kawishbit.com` unless changed). Nothing built is ever committed.
 
-Must contain: install and quickstart; the ordinal/numeric distinction up front; live prop playground; full token reference; **recipes** including the magenta original look; the `stop` slot; icons and images; accessibility notes; SSR/Nuxt recipe; and a **vlider migration table** (`vliderData`→`stops`, `id`→removed, index→value, `theme`→tokens, `extras`→the stop itself, `bullet` slot→`stop` slot).
+Must contain: install and quickstart; the ordinal/numeric distinction up front; live prop playground; full token reference; **recipes** including the magenta original look; the `stop` slot; icons and images; accessibility notes; SSR/Nuxt recipe; and a **predecessor migration table** (its data prop→`stops`, `id`→removed, index→value, `theme`→tokens, `extras`→the stop itself, `bullet` slot→`stop` slot).
 
 ## 11. Release
 

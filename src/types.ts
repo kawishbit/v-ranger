@@ -12,7 +12,7 @@ export interface Stop<V = unknown> {
   label?: string
   /**
    * A unicode string, rendered as a text node, or a Vue component. Never a font:
-   * requiring one silently is the vlider bug goal 1 of the spec exists to kill.
+   * requiring one silently is the predecessor's bug goal 1 of the spec exists to kill.
    */
   icon?: string | Component
   /** Image URL, rendered as an `<img>`. Takes precedence over `icon`. */

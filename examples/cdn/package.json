@@ -1,8 +1,0 @@
-{
-  "name": "smoke-cdn",
-  "private": true,
-  "dependencies": {
-    "v-ranger": "file:../v-ranger-local.tgz",
-    "vue": "^3.5.42"
-  }
-}

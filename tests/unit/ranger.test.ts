@@ -80,7 +80,7 @@ describe('structure', () => {
     expect(wrapper.get('input[type="range"]').attributes('aria-hidden')).toBeUndefined()
   })
 
-  it('has no `id` anywhere: the vlider bug that forced one is gone (ADR-0001)', () => {
+  it('has no `id` anywhere: the predecessor bug that forced one is gone (ADR-0001)', () => {
     const wrapper = mount(Ranger, { props: { stops: moods } })
 
     expect(wrapper.html()).not.toMatch(/\sid=/)
@@ -271,7 +271,7 @@ describe('the unset state (ADR-0003)', () => {
   it('parks at the start rather than the midpoint, and says so', () => {
     const wrapper = mount(Ranger, { props: { stops: moods, modelValue: null } })
 
-    // vlider handed null to a native input, which coerced it to the midpoint:
+    // The predecessor handed null to a native input, which coerced it to the midpoint:
     // an unanswered question rendered as a deliberate neutral answer.
     expect(engineOf(wrapper).value).toBe('0')
     expect(positionOf(wrapper)).toBe('0')
@@ -451,7 +451,7 @@ describe('server rendering', () => {
 })
 
 describe('colour', () => {
-  // `gradients.mood` is vlider's ramp; `gradients.test.ts` is where that claim
+  // `gradients.mood` is the predecessor's ramp; `gradients.test.ts` is where that claim
   // is pinned against an independent copy of it. Here it is just the fixture.
   const coloured = moods.map((stop, index) => ({ ...stop, color: gradients.mood[index] }))
 
@@ -521,7 +521,7 @@ describe('colour', () => {
     expect(tokenOf(wrapper, '--ranger-active-color')).toBe('#ff6bd6')
   })
 
-  it('reproduces vlider exactly when every stop carries its own colour', () => {
+  it('reproduces the predecessor exactly when every stop carries its own colour', () => {
     const wrapper = mount(Ranger, { props: { stops: coloured } })
 
     expect(tokenOf(wrapper, '--ranger-gradient')).toBe(
@@ -579,7 +579,7 @@ describe('colour', () => {
     mount(Ranger, { props: { stops: moods, gradient: ['red', 'blue'] } })
     mount(Ranger, { props: { stops: moods, gradient: 'linear-gradient(to top, red, blue)' } })
 
-    // The generated `<style id="rangeStyle{id}">` is what forced vlider's `id`
+    // The generated `<style id="rangeStyle{id}">` is what forced the predecessor's `id`
     // prop and let two Rangers overwrite each other (ADR-0001).
     expect(document.head.innerHTML).toBe(headBefore)
   })

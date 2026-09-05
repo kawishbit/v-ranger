@@ -210,7 +210,7 @@ describe('the engine in a real browser', () => {
  * between stops is only knowable here.
  */
 describe('colour in a real browser', () => {
-  const vlider = ['#ffc300', '#ffb0fe', '#ff6bd6', '#ff9d76', '#51eaea', '#fb3569']
+  const predecessorRamp = ['#ffc300', '#ffb0fe', '#ff6bd6', '#ff9d76', '#51eaea', '#fb3569']
 
   /** How a computed style spells a hex colour back at you. */
   function rgb(hex: string) {
@@ -246,9 +246,9 @@ describe('colour in a real browser', () => {
 
     expect(ramp).toContain('linear-gradient(to right')
 
-    // In order, and only these: the ramp the original vlider demo shipped.
+    // In order, and only these: the ramp the original predecessor demo shipped.
     const painted = [...ramp.matchAll(/rgb\([^)]*\)/g)].map(([match]) => match)
-    expect(painted).toEqual(vlider.map(rgb))
+    expect(painted).toEqual(predecessorRamp.map(rgb))
   })
 
   it('runs the ramp and the fill the other way under an RTL ancestor', () => {
@@ -291,7 +291,7 @@ describe('colour in a real browser', () => {
     expect(getComputedStyle(thumb).backgroundColor).toBe(rgb('#ff6bd6'))
 
     // Waited for rather than sampled mid-flight, which would be a race against
-    // a 160ms clock. vlider could not travel at all: a pseudo-element thumb is
+    // a 160ms clock. The predecessor could not travel at all: a pseudo-element thumb is
     // not reliably animatable, which is half of ADR-0001.
     const travelled = new Promise((resolve) =>
       thumb.addEventListener('transitionstart', resolve, { once: true }),

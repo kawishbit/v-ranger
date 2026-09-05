@@ -63,7 +63,6 @@
     "build:types": "vue-tsc -p tsconfig.build.json",
     "verify:build": "node scripts/verify-build.mjs",
     "verify:types": "node scripts/verify-types.mjs",
-    "verify:examples": "node examples/verify.mjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Ranger } from '../../src/index'
+import CodeBlock from '../CodeBlock.vue'
 import ExampleCard from '../ExampleCard.vue'
 import { useLastCommit } from '../useLastCommit'
+import source from './NumericAxisExample.vue?raw'
 
 const score = ref<number | null>(null)
 const { lastCommit, record } = useLastCommit<number | null>()
 </script>
 
 <template>
+  <CodeBlock :code="source" />
   <ExampleCard theme="light" background="#dbeafe">
     <h2>Numeric axis</h2>
     <Ranger

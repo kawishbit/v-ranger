@@ -79,7 +79,7 @@
 
   /*
    * Colour, resolved light-first. The gradient default is `mood`, colour for
-   * colour — the ramp vlider shipped — and a test holds it to whatever
+   * colour — the ramp the predecessor shipped — and a test holds it to whatever
    * `src/gradients.ts` says.
    */
   --_surface: var(--ranger-surface, var(--_light-surface));
@@ -224,7 +224,7 @@
 
 /*
  * The ramp spans the whole track and is never squeezed by the value, which is
- * how vlider looked and the reason the component is worth having.
+ * how the predecessor looked and the reason the component is worth having.
  */
 .ranger__track {
   block-size: var(--_track-height);
@@ -305,7 +305,7 @@
   background: var(--_thumb-color);
 
   /*
-   * The largest visual upgrade over vlider, where the thumb was `transparent`
+   * The largest visual upgrade over the predecessor, where the thumb was `transparent`
    * and could not have been anything else: a pseudo-element thumb
    * is not reliably animatable (ADR-0001). `--ranger-active-color` is a colour,
    * so the computed `background-color` interpolates when the value moves to a
@@ -437,7 +437,7 @@
 }
 
 /*
- * The selected label is the bold one in vlider. Both halves are tokens,
+ * The selected label is the bold one in the predecessor. Both halves are tokens,
  * because "which stop is chosen" is exactly the kind of thing a consumer
  * restyles and there is no theme class to do it with (ADR-0004).
  */
@@ -457,7 +457,7 @@
 
 /*
  * Whatever the consumer put here: a unicode text node, an image, or a component.
- * Never a font — vlider's demo silently required one, and goal 1 of the spec is
+ * Never a font — the predecessor's demo silently required one, and goal 1 of the spec is
  * that a clean install looks like the screenshot.
  */
 .ranger__icon {

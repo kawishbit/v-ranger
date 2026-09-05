@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { Ranger } from '../../src/index'
+import CodeBlock from '../CodeBlock.vue'
 import ExampleCard from '../ExampleCard.vue'
 import { gapped, moods } from '../data'
+import source from './StatesExample.vue?raw'
 </script>
 
 <template>
+  <CodeBlock :code="source" />
   <ExampleCard theme="light" background="#fef9c3">
     <h2>States</h2>
     <p>Unset — a flat track and a parked, untinted thumb, not a neutral answer</p>

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { Ranger } from '../../src/index'
+import CodeBlock from '../CodeBlock.vue'
 import ExampleCard from '../ExampleCard.vue'
 import { moods } from '../data'
+import source from './SlotsExample.vue?raw'
 </script>
 
 <template>
+  <CodeBlock :code="source" />
   <ExampleCard theme="light" background="#d1fae5">
     <h2>Slots</h2>
     <p><code>#label</code> and <code>#icon</code> replace only their own part</p>

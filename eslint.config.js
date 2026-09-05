@@ -7,9 +7,8 @@ import ts from 'typescript-eslint'
 export default ts.config(
   {
     // `type-tests/` is fixtures for `vue-tsc`, not source; `bad.vue` fails on
-    // purpose. `examples/` is its own standalone npm project, with a build and
-    // lint surface of its own.
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'type-tests/**', 'examples/**'],
+    // purpose.
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'type-tests/**'],
   },
   js.configs.recommended,
   ts.configs.recommended,

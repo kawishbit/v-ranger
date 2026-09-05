@@ -162,7 +162,7 @@ const placed = computed(() => placeStops(axis.value))
 /**
  * The whole colour system, as two strings. Nothing here reaches for the DOM, so
  * a Ranger is as colourful on the server as in the browser and no stylesheet is
- * ever generated — the vlider bug ADR-0001 exists to kill.
+ * ever generated — the predecessor's bug ADR-0001 exists to kill.
  */
 const gradient = computed(() =>
   resolveGradient(

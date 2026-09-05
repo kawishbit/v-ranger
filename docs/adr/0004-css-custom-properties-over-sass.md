@@ -2,11 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-04
-- **Supersedes:** vlider's SCSS variables and `theme-*` partials
+- **Supersedes:** the predecessor's SCSS variables and `theme-*` partials
 
 ## Context
 
-vlider was themed in Sass: roughly 150 `!default` variables plus three theme partials (`_light.scss`, `_dark.scss`, `_purple.scss`). The partials were near-identical ~200-line copies of one another differing in about three colours each, kept in sync by hand. The published package had to include `src/**` so consumers could compile the partials themselves, and the README needed a paragraph explaining where to `@import` what.
+The predecessor was themed in Sass: roughly 150 `!default` variables plus three theme partials (`_light.scss`, `_dark.scss`, `_purple.scss`). The partials were near-identical ~200-line copies of one another differing in about three colours each, kept in sync by hand. The published package had to include `src/**` so consumers could compile the partials themselves, and the README needed a paragraph explaining where to `@import` what.
 
 For a consumer who merely wanted a different colour, that meant: install a Sass toolchain, import the partials in the right order, override variables before the import, rebuild. Nothing was switchable at runtime — no dark mode reacting to `prefers-color-scheme`, no theme toggle, no per-instance variation without a new class and another build.
 
@@ -22,7 +22,7 @@ Every adjustable value is a **`--ranger-*` custom property** declared on the com
 
 Colour is expressed separately from data: the `gradient` prop takes a preset name, an array of colours, or a CSS gradient string, and a stop's own `color` overrides its slice. Because the browser baseline is Baseline Widely Available, `color-mix()` is available for interpolating the thumb's tint between stops without JavaScript.
 
-All layout uses **logical properties** (`inset-inline-start`, `margin-inline`, `padding-block`), so RTL works from the first release and a future vertical orientation is an addition rather than a rewrite. vlider used physical `left`/`right` throughout, which is exactly why neither was cheap there.
+All layout uses **logical properties** (`inset-inline-start`, `margin-inline`, `padding-block`), so RTL works from the first release and a future vertical orientation is an addition rather than a rewrite. The predecessor used physical `left`/`right` throughout, which is exactly why neither was cheap there.
 
 ## Consequences
 

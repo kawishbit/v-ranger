@@ -5,7 +5,7 @@
 
 ## Context
 
-"Range slider" names two different controls. vlider was the first: an ordered list of labelled stops, one thumb, pick one. The conventional meaning is the second: a continuous numeric domain with a step.
+"Range slider" names two different controls. The predecessor was the first: an ordered list of labelled stops, one thumb, pick one. The conventional meaning is the second: a continuous numeric domain with a step.
 
 The emotive, colourful scale is the hero use case, and it only looks good with a handful of stops — beyond roughly eight, labels collide and the design falls apart. But a component that _only_ does labelled stops is a narrow package, and users will arrive expecting `min`/`max`/`step` to work.
 
@@ -47,4 +47,4 @@ Both kinds resolve to the same three primitives, which are pure functions with n
 
 **Two separate components** (`<Ranger>` and `<RangerScale>`). Rejected: they would share the engine, presentation layer, gradient system, accessibility layer and roughly all of the tests, differing only in how position is computed. That is one component with two axes, described twice.
 
-**Ordinal only, as vlider was.** Rejected: too narrow to justify a package, and it invites a fork the first time someone wants `0–100`.
+**Ordinal only, as the predecessor was.** Rejected: too narrow to justify a package, and it invites a fork the first time someone wants `0–100`.

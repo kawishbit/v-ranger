@@ -86,7 +86,7 @@ describe('unset', () => {
 
   it('is not the middle stop either, which is the one that matters', () => {
     // A survey's whole point: an unanswered question must not read as a
-    // deliberate neutral answer, which is what vlider rendered. The thumb's
+    // deliberate neutral answer, which is what the predecessor rendered. The thumb's
     // position is what carries that now that the track no longer differs.
     const unset = mountRanger({ modelValue: null })
     const middle = mountRanger({ modelValue: 'meh' })

@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-04
-- **Supersedes:** vlider's directly-styled `<input type="range">`
+- **Supersedes:** the predecessor's directly-styled `<input type="range">`
 
 ## Context
 
@@ -12,9 +12,9 @@ It must feel like a native control: keyboard (arrows, Home/End, PageUp/PageDown)
 
 It must also look nothing like a native control. The whole premise of the component is colour and expression: a gradient track, a thumb that tints itself to the selected stop and transitions between colours, labels above, icons below.
 
-The predecessor, vlider, styled the native input directly through vendor pseudo-elements (`::-webkit-slider-runnable-track`, `::-moz-range-thumb`, `::-ms-fill-lower`). That choice had consequences that shaped — and damaged — the rest of its design:
+The predecessor styled the native input directly through vendor pseudo-elements (`::-webkit-slider-runnable-track`, `::-moz-range-thumb`, `::-ms-fill-lower`). That choice had consequences that shaped — and damaged — the rest of its design:
 
-- The gradient could not be expressed per-instance in CSS, so vlider generated a `<style id="rangeStyle{id}">` element and appended it to `document.head` on mount.
+- The gradient could not be expressed per-instance in CSS, so the predecessor generated a `<style id="rangeStyle{id}">` element and appended it to `document.head` on mount.
 - That, in turn, forced a required `id` prop. Two Rangers left at the default `id` would silently overwrite each other's stylesheet.
 - The thumb had to be `background: transparent`, because a pseudo-element thumb cannot hold content and cannot easily be tinted per-value. The visible marker dots were actually `::after` pseudo-elements on the `<li>` labels — the thumb itself was invisible.
 - Pseudo-element styling is not consistently animatable, so colour interpolation between stops was out of reach.
@@ -45,7 +45,7 @@ No vendor pseudo-element is styled for appearance. No stylesheet is generated at
 
 ## Alternatives considered
 
-**Style the native input directly (vlider's approach).** Rejected: it cannot deliver a content-bearing, colour-interpolating thumb, and its need for a generated stylesheet is what produced the `id` prop and the global-state bug.
+**Style the native input directly (the predecessor's approach).** Rejected: it cannot deliver a content-bearing, colour-interpolating thumb, and its need for a generated stylesheet is what produced the `id` prop and the global-state bug.
 
 **Fully custom `<div role="slider">`.** Rejected: total visual freedom, but we would own keyboard handling, pointer/touch/pen tracking, focus management, form participation and every ARIA detail — the largest and least differentiated part of the work, and the part most likely to be subtly wrong for assistive technology. It is also the only option that turns WCAG 2.2 AA from a checklist into a research project.
 

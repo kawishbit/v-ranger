@@ -50,7 +50,7 @@ describe('resolve, the unset value', () => {
     expect(unset.index).toBe(-1)
     expect(unset.unset).toBe(true)
 
-    // vlider handed null to a native input, which parked the thumb at the
+    // The predecessor handed null to a native input, which parked the thumb at the
     // midpoint: an unanswered question that looked answered (ADR-0003).
     expect(unset.position).toBe(0)
 

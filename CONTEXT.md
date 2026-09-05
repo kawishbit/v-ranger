@@ -76,7 +76,7 @@ One addressable point on the **axis**:
 
 `value` is what `v-model` carries. `at` pins the stop to a coordinate on a **numeric
 axis** and is meaningless on an **ordinal axis**. Never called a "step" (that word is the
-numeric increment) and never called a "bullet" (vlider's name for the marker dot).
+numeric increment) and never called a "bullet" (the predecessor's name for the marker dot).
 
 ### Axis
 
@@ -176,9 +176,9 @@ who have never read this file:
 
 | Avoid                | Use instead                | Why                                                        |
 | -------------------- | -------------------------- | ---------------------------------------------------------- |
-| bullet               | thumb, or stop marker      | vlider's term; ambiguous between the thumb and stop dots    |
+| bullet               | thumb, or stop marker      | the predecessor's term; ambiguous between the thumb and stop dots |
 | `theme` / theme class| token, recipe              | there is no theme prop; restyling is tokens                 |
-| `extras`             | the stop object itself      | vlider's catch-all bag; stops carry consumer fields directly |
+| `extras`             | the stop object itself      | the predecessor's catch-all bag; stops carry consumer fields directly |
 | step (as a noun)     | stop                        | `step` is the numeric increment on a numeric axis            |
 | index (in the API)   | value                       | `v-model` carries the stop's `value`, never its index        |
 | slider               | Ranger, track, or engine    | ambiguous between three different things                     |

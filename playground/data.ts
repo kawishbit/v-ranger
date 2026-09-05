@@ -20,9 +20,6 @@ export const gapped = [
   { value: 'c', label: 'C', icon: '😊' },
 ]
 
-/** What vlider's demo shipped, spelled the way a consumer would spell it now. */
-export const vliderStops = moods.map((stop, index) => ({ ...stop, color: gradients.mood[index] }))
-
 /** Long enough that a slice cannot hold them on one line. */
 export const verbose = [
   { value: 'a', label: 'Extraordinarily disappointed', icon: '😠' },

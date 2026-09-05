@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { gradients, resolveGradient, sampleRamp, tintAt } from '../../src/gradients'
 
-/** The colours the original vlider demo shipped, in the order it shipped them. */
-const vlider = ['#ffc300', '#ffb0fe', '#ff6bd6', '#ff9d76', '#51eaea', '#fb3569']
+/** The colours the original predecessor's demo shipped, in the order it shipped them. */
+const predecessorRamp = ['#ffc300', '#ffb0fe', '#ff6bd6', '#ff9d76', '#51eaea', '#fb3569']
 
 /** An ordinal axis of _n_ evenly spaced stops, the way `placeStops` places them. */
 function evenStops(count: number, colors: (string | undefined)[] = []) {
@@ -13,8 +13,8 @@ function evenStops(count: number, colors: (string | undefined)[] = []) {
 }
 
 describe('the presets', () => {
-  it('ships mood as vlider own ramp, so a migrating consumer sees no change', () => {
-    expect(gradients.mood).toEqual(vlider)
+  it('ships mood as the predecessor own ramp, so a migrating consumer sees no change', () => {
+    expect(gradients.mood).toEqual(predecessorRamp)
   })
 
   it('ships the five the spec names, each of them an actual ramp', () => {
@@ -34,7 +34,7 @@ describe('resolveGradient', () => {
     // `--ranger-gradient` overridable from CSS (ADR-0004).
     expect(resolved.css).toBeNull()
     expect(resolved.diagnostics).toEqual([])
-    expect(resolved.ramp?.map((stop) => stop.color)).toEqual(vlider)
+    expect(resolved.ramp?.map((stop) => stop.color)).toEqual(predecessorRamp)
   })
 
   it('spreads a preset evenly across the track', () => {
@@ -83,7 +83,7 @@ describe('resolveGradient', () => {
     const resolved = resolveGradient('mooood', [])
 
     expect(resolved.diagnostics).toEqual([{ code: 'invalid-gradient' }])
-    expect(resolved.ramp?.map((stop) => stop.color)).toEqual(vlider)
+    expect(resolved.ramp?.map((stop) => stop.color)).toEqual(predecessorRamp)
     expect(resolved.css).toBeNull()
   })
 
@@ -118,8 +118,8 @@ describe('resolveGradient', () => {
 })
 
 describe('a stop that brings its own colour', () => {
-  it('reproduces vlider exactly when every stop carries one', () => {
-    const resolved = resolveGradient(undefined, evenStops(6, vlider))
+  it('reproduces the predecessor exactly when every stop carries one', () => {
+    const resolved = resolveGradient(undefined, evenStops(6, predecessorRamp))
 
     expect(resolved.css).toBe(
       'linear-gradient(var(--ranger-gradient-direction, to right), ' +
@@ -269,7 +269,7 @@ describe('sampleRamp', () => {
 
 describe('tintAt', () => {
   it('reads the ramp at the thumb, which on a stop is that stop own colour', () => {
-    const resolved = resolveGradient(undefined, evenStops(6, vlider))
+    const resolved = resolveGradient(undefined, evenStops(6, predecessorRamp))
 
     expect(tintAt(resolved, 0.4)).toBe('#ff6bd6')
   })

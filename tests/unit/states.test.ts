@@ -49,7 +49,7 @@ describe('unset', () => {
     await nextTick()
 
     // No `v-model` at all, so there is nothing to write back to and no reason
-    // to speak: the vlider bug ADR-0003 exists to kill.
+    // to speak: the predecessor's bug ADR-0003 exists to kill.
     expect(wrapper.emitted()).toEqual({})
     expect(wrapper.attributes('data-unset')).toBeDefined()
   })

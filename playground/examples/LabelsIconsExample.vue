@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { Ranger } from '../../src/index'
+import CodeBlock from '../CodeBlock.vue'
 import ExampleCard from '../ExampleCard.vue'
 import { moods, verbose } from '../data'
+import source from './LabelsIconsExample.vue?raw'
 </script>
 
 <template>
+  <CodeBlock :code="source" />
   <ExampleCard theme="dark" background="#0f172a">
     <h2>Labels and icons, where the consumer wants them</h2>
     <p><code>label-position="below"</code>, <code>icon-position="above"</code></p>
