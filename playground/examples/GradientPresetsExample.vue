@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { reactive } from 'vue'
 import { Ranger } from '../../src/index'
 import CodeBlock from '../CodeBlock.vue'
 import ExampleCard from '../ExampleCard.vue'
 import { moods, presets } from '../data'
 import source from './GradientPresetsExample.vue?raw'
+
+/** One starting value per preset, so each Ranger in the loop keeps its own. */
+const values = reactive(Object.fromEntries(presets.map((name) => [name, 'wow'])))
 </script>
 
 <template>
@@ -14,7 +18,7 @@ import source from './GradientPresetsExample.vue?raw'
       <p>
         <code>{{ name }}</code>
       </p>
-      <Ranger :stops="moods" :gradient="name" :aria-label="name" />
+      <Ranger v-model="values[name]" :stops="moods" :gradient="name" :aria-label="name" />
     </div>
   </ExampleCard>
 </template>

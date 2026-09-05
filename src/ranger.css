@@ -183,30 +183,56 @@
 }
 
 /*
- * An explicit `data-theme` ancestor beats the media query in both directions, by
- * specificity rather than by order, so a light island inside a dark page works
- * as well as the other way round. Nothing ships for it but these two blocks:
- * `data-theme` is an attribute pages already carry, and reading one is not the
- * same as shipping the appearance behind it (ADR-0004, ADR-0005).
+ * An explicit `data-theme` ancestor beats the media query in both directions,
+ * and the *nearest* one wins when two disagree — a light island nested inside
+ * a dark page, or the other way round. A plain descendant selector cannot
+ * express that: `[data-theme='dark'] .ranger` and `[data-theme='light'] .ranger`
+ * match at identical specificity whenever both ancestors are present, so the
+ * cascade fell back to source order and the later-declared rule always won,
+ * regardless of which ancestor was actually closest (issue 28).
+ *
+ * A container style query asks a different question: not "does a `dark`
+ * ancestor exist anywhere above me", but "what does my *nearest* query
+ * container say" — which is proximity by construction. `container-type:
+ * normal` opts an element with a `data-theme` attribute into being one, with
+ * no size or layout containment attached; `--_theme` is the value every such
+ * container carries for its nearest descendant Ranger to read.
  */
-[data-theme='dark'] .ranger {
-  --_surface: var(--ranger-surface, var(--_dark-surface));
-  --_track-color: var(--ranger-track-color, var(--_dark-track));
-  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_dark-thumb)));
-  --_thumb-border-color: var(--ranger-thumb-border-color, var(--_dark-thumb-border));
-  --_label-color: var(--ranger-label-color, var(--_dark-label));
-  --_label-color-selected: var(--ranger-label-color-selected, var(--_dark-label-selected));
-  --_focus-color: var(--ranger-focus-color, var(--_dark-focus));
+[data-theme='dark'],
+[data-theme='light'] {
+  container-type: normal;
 }
 
-[data-theme='light'] .ranger {
-  --_surface: var(--ranger-surface, var(--_light-surface));
-  --_track-color: var(--ranger-track-color, var(--_light-track));
-  --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_light-thumb)));
-  --_thumb-border-color: var(--ranger-thumb-border-color, var(--_light-thumb-border));
-  --_label-color: var(--ranger-label-color, var(--_light-label));
-  --_label-color-selected: var(--ranger-label-color-selected, var(--_light-label-selected));
-  --_focus-color: var(--ranger-focus-color, var(--_light-focus));
+[data-theme='dark'] {
+  --_theme: dark;
+}
+
+[data-theme='light'] {
+  --_theme: light;
+}
+
+@container style(--_theme: dark) {
+  .ranger {
+    --_surface: var(--ranger-surface, var(--_dark-surface));
+    --_track-color: var(--ranger-track-color, var(--_dark-track));
+    --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_dark-thumb)));
+    --_thumb-border-color: var(--ranger-thumb-border-color, var(--_dark-thumb-border));
+    --_label-color: var(--ranger-label-color, var(--_dark-label));
+    --_label-color-selected: var(--ranger-label-color-selected, var(--_dark-label-selected));
+    --_focus-color: var(--ranger-focus-color, var(--_dark-focus));
+  }
+}
+
+@container style(--_theme: light) {
+  .ranger {
+    --_surface: var(--ranger-surface, var(--_light-surface));
+    --_track-color: var(--ranger-track-color, var(--_light-track));
+    --_thumb-color: var(--ranger-thumb-color, var(--ranger-active-color, var(--_light-thumb)));
+    --_thumb-border-color: var(--ranger-thumb-border-color, var(--_light-thumb-border));
+    --_label-color: var(--ranger-label-color, var(--_light-label));
+    --_label-color-selected: var(--ranger-label-color-selected, var(--_light-label-selected));
+    --_focus-color: var(--ranger-focus-color, var(--_light-focus));
+  }
 }
 
 /*

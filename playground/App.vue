@@ -47,10 +47,15 @@ section {
   margin-block-end: 2.5rem;
 }
 
-pre {
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  background: #f5f5f5;
-  overflow: auto;
+/*
+ * A stop block hangs half its own slice outside the Ranger at either end, by
+ * design (src/ranger.css) — a consumer whose layout clips that overflow is
+ * not the component's problem to solve. A slice is `1 / stop-count` wide, so
+ * the fewer stops a demo has, the more room its edge labels need: 15% covers
+ * this playground's narrowest demo (three stops, a 16.7%-of-Ranger overhang
+ * each side) with margin to spare, whatever the viewport width.
+ */
+.label-overhang-guard {
+  padding-inline: 15%;
 }
 </style>

@@ -20,6 +20,8 @@ import source from './StatesExample.vue?raw'
     <Ranger :stops="moods" model-value="wow" readonly aria-label="Readonly" />
 
     <p>One stop disabled — struck through, and skipped by key, drag and click</p>
-    <Ranger :stops="gapped" model-value="a" aria-label="One stop disabled" />
+    <div class="label-overhang-guard">
+      <Ranger :stops="gapped" model-value="a" aria-label="One stop disabled" />
+    </div>
   </ExampleCard>
 </template>

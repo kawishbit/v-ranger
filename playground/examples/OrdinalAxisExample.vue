@@ -7,7 +7,7 @@ import { moods } from '../data'
 import { useLastCommit } from '../useLastCommit'
 import source from './OrdinalAxisExample.vue?raw'
 
-const mood = ref<string | null>(null)
+const mood = ref<string | null>('okay')
 const { lastCommit, record } = useLastCommit<string | number>()
 </script>
 
@@ -19,6 +19,6 @@ const { lastCommit, record } = useLastCommit<string | number>()
     <p>
       <code>{{ mood ?? 'unset' }}</code>
     </p>
-    <pre>{{ lastCommit }}</pre>
+    <CodeBlock :code="lastCommit" lang="json" />
   </ExampleCard>
 </template>

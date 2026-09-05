@@ -6,7 +6,7 @@ import ExampleCard from '../ExampleCard.vue'
 import { useLastCommit } from '../useLastCommit'
 import source from './NumericAxisExample.vue?raw'
 
-const score = ref<number | null>(null)
+const score = ref<number | null>(50)
 const { lastCommit, record } = useLastCommit<number | null>()
 </script>
 
@@ -26,6 +26,6 @@ const { lastCommit, record } = useLastCommit<number | null>()
     <p>
       <code>{{ score ?? 'unset' }}</code>
     </p>
-    <pre>{{ lastCommit }}</pre>
+    <CodeBlock :code="lastCommit" lang="json" />
   </ExampleCard>
 </template>

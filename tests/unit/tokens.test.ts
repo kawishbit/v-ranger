@@ -143,9 +143,11 @@ describe('the token surface', () => {
     const elsewhere = parsed
       .filter((rule) => rule.declarations.some(({ property }) => property.startsWith('--_')))
       .map((rule) => rule.selector)
-      // `.ranger`, plus the size and theme variants of it. A default written
-      // any deeper would be a second place to look for one.
-      .filter((selector) => !/^(\[data-theme=.[a-z]+.\] )?\.ranger(\[[^\]]+\])?$/.test(selector))
+      // `.ranger`, plus the size variant of it and the bare `[data-theme]`
+      // container blocks that carry `--_theme` for a nearest-ancestor query
+      // (issue 28). A default written any deeper would be a second place to
+      // look for one.
+      .filter((selector) => !/^(\.ranger(\[[^\]]+\])?|\[data-theme=.[a-z]+.\])$/.test(selector))
 
     expect(elsewhere).toEqual([])
   })
@@ -157,7 +159,7 @@ describe('the token surface', () => {
     // hardcoded value being smuggled in behind a private name — the one hole a
     // grep for literals cannot see, since a custom property is where a default
     // is allowed to live.
-    const internals = new Set(['--_touch-target', '--_slice'])
+    const internals = new Set(['--_touch-target', '--_slice', '--_theme'])
     const palette = /^--_(light|dark)-/
 
     const declared = parsed.flatMap((rule) =>
@@ -193,35 +195,43 @@ describe('the token surface', () => {
   })
 
   it('gives every scheme block the same tokens, whichever way it is asked for', () => {
-    // A media query and a `data-theme` ancestor cannot be combined without
-    // losing the specificity that lets the explicit one win, so the same eight
-    // aliases are re-pointed in three places. The colours behind them are
-    // written once, in the palette, but nothing except this stops the *lists*
-    // drifting apart (ADR-0005).
+    // A media query and a `data-theme` container query cannot be combined
+    // without losing the specificity (media) or the containment (container)
+    // that lets the explicit one win, so the same seven aliases are re-pointed
+    // in three places: `@media`, `@container style(--_theme: dark)` and
+    // `@container style(--_theme: light)`. The colours behind them are written
+    // once, in the palette, but nothing except this stops the *lists* drifting
+    // apart (ADR-0005). The flat rule reader (deliberately not a CSS parser)
+    // has no notion of an `@`-rule wrapper, so a `.ranger` block nested in one
+    // comes out at the top level same as the root's own — in file order: root,
+    // then the dark-scheme media block, then the two container blocks.
     const roots = parsed.filter((rule) => rule.selector === '.ranger')
-    expect(roots, 'expected a root block and a dark-scheme one').toHaveLength(2)
+    expect(roots, 'expected root, media-dark, container-dark, container-light').toHaveLength(4)
+
+    const [base, mediaDark, containerDark, containerLight] = roots as [Rule, Rule, Rule, Rule]
 
     const properties = (rule: Rule) => rule.declarations.map(({ property }) => property)
-    const scheme = (name: string) =>
-      parsed.find((rule) =>
-        new RegExp(`^\\[data-theme=.${name}.\\] \\.ranger$`).test(rule.selector),
-      )
 
-    const dark = scheme('dark')
-    const light = scheme('light')
+    // The media query and both containers: one list of names, three blocks.
+    expect(properties(containerDark)).toEqual(properties(mediaDark))
+    expect(properties(containerLight)).toEqual(properties(mediaDark))
 
-    expect(dark, 'no dark block').toBeDefined()
-    expect(light, 'no light block').toBeDefined()
-
-    // The media query and both ancestors: one list of names, three selectors.
-    expect(properties(dark!)).toEqual(properties(roots[1]!))
-    expect(properties(light!)).toEqual(properties(roots[1]!))
-
-    // And the light block says exactly what the root already resolved to, so
-    // `data-theme="light"` inside a dark page is the plain default again.
-    const rootDefaults = new Map(roots[0]!.declarations.map((d) => [d.property, d.value]))
-    for (const { property, value } of light!.declarations) {
+    // And the light container says exactly what the root already resolved to,
+    // so `data-theme="light"` inside a dark page is the plain default again.
+    const rootDefaults = new Map(base.declarations.map((d) => [d.property, d.value]))
+    for (const { property, value } of containerLight.declarations) {
       expect(value, `${property} drifted from the default`).toBe(rootDefaults.get(property))
     }
+  })
+
+  it('marks every data-theme ancestor as a query container, unnamed and unsized', () => {
+    // Style queries need no size or layout containment — `normal` is enough —
+    // and no name, since a Ranger only ever asks for its *nearest* one.
+    const container = parsed.find(
+      (rule) => rule.selector === "[data-theme='dark'], [data-theme='light']",
+    )
+
+    expect(container, 'no container-type block for [data-theme]').toBeDefined()
+    expect(container!.declarations).toEqual([{ property: 'container-type', value: 'normal' }])
   })
 })

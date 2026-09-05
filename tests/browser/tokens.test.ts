@@ -42,6 +42,20 @@ function ancestor(style = '', attributes: Record<string, string> = {}) {
   return host
 }
 
+/** Mounts inside two nested `data-theme` ancestors, so a test can ask which one wins. */
+function mountNested(outerTheme: string, innerTheme: string) {
+  const outer = ancestor('', { 'data-theme': outerTheme })
+  const inner = ancestor('', { 'data-theme': innerTheme })
+  outer.append(inner)
+  document.body.append(outer)
+  hosts.push(outer)
+
+  const wrapper = mount(Ranger, { props: { stops: moods, modelValue: 'meh' }, attachTo: inner })
+  wrappers.push(wrapper)
+
+  return wrapper
+}
+
 /** What a browser paints, per part, as plain strings a test can compare. */
 function painted(wrapper: ReturnType<typeof mount>) {
   const of = (selector: string) => getComputedStyle(wrapper.get(selector).element)
@@ -155,6 +169,19 @@ describe('the colour scheme', () => {
 
     expect(lightInDark.colour).toEqual(light.colour)
     expect(darkInDark.colour).toEqual(dark.colour)
+  })
+
+  it('lets the nearest data-theme ancestor win when two disagree, not whichever is outermost', () => {
+    const light = painted(mountIn(ancestor('', { 'data-theme': 'light' })))
+    const dark = painted(mountIn(ancestor('', { 'data-theme': 'dark' })))
+
+    const darkNestedInLight = painted(mountNested('light', 'dark'))
+    const lightNestedInDark = painted(mountNested('dark', 'light'))
+
+    // The nearest ancestor wins, not the one whose selector happens to be
+    // declared last in the stylesheet (issue 28).
+    expect(darkNestedInLight.colour).toEqual(dark.colour)
+    expect(lightNestedInDark.colour).toEqual(light.colour)
   })
 
   it('still hands a token override to the consumer under either scheme', async () => {
