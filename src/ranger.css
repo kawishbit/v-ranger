@@ -21,6 +21,20 @@
  *      and an explicit `[data-theme]` ancestor beating both (ADR-0004).
  */
 
+/*
+ * Registers `--ranger-position` as a real `<number>` rather than an untyped
+ * token list, which is what lets the browser tween it frame by frame — an
+ * inherited custom property swapped in with a plain `var()` does not
+ * interpolate on its own (issue 17). `inherits: true` because the component
+ * writes it once, on the root, and every descendant that reads it does so
+ * through inheritance.
+ */
+@property --ranger-position {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 .ranger {
   /* Geometry. This is `md`; `[data-size]` below re-resolves the five that scale. */
   --_track-height: var(--ranger-track-height, 0.5rem);
@@ -88,8 +102,7 @@
   --_label-color-selected: var(--ranger-label-color-selected, var(--_light-label-selected));
   --_focus-color: var(--ranger-focus-color, var(--_light-focus));
 
-  /* States. An unset track defaults to the track's own colour, flattened. */
-  --_unset-track-color: var(--ranger-unset-track-color, var(--_light-track));
+  /* States. */
   --_unset-opacity: var(--ranger-unset-opacity, 0.55);
   --_disabled-opacity: var(--ranger-disabled-opacity, 0.45);
   --_transition: var(--ranger-transition, 160ms ease);
@@ -166,7 +179,6 @@
     --_label-color: var(--ranger-label-color, var(--_dark-label));
     --_label-color-selected: var(--ranger-label-color-selected, var(--_dark-label-selected));
     --_focus-color: var(--ranger-focus-color, var(--_dark-focus));
-    --_unset-track-color: var(--ranger-unset-track-color, var(--_dark-track));
   }
 }
 
@@ -185,7 +197,6 @@
   --_label-color: var(--ranger-label-color, var(--_dark-label));
   --_label-color-selected: var(--ranger-label-color-selected, var(--_dark-label-selected));
   --_focus-color: var(--ranger-focus-color, var(--_dark-focus));
-  --_unset-track-color: var(--ranger-unset-track-color, var(--_dark-track));
 }
 
 [data-theme='light'] .ranger {
@@ -196,7 +207,6 @@
   --_label-color: var(--ranger-label-color, var(--_light-label));
   --_label-color-selected: var(--ranger-label-color-selected, var(--_light-label-selected));
   --_focus-color: var(--ranger-focus-color, var(--_light-focus));
-  --_unset-track-color: var(--ranger-unset-track-color, var(--_light-track));
 }
 
 /*
@@ -233,6 +243,13 @@
   block-size: 100%;
   inline-size: calc(var(--ranger-position, 0) * 100%);
   background: none;
+
+  /*
+   * Glides to a keyboard, click-to-jump or external `v-model` move rather than
+   * teleporting there — a live drag already tracks the pointer 1:1 and is
+   * exempted below (issue 17).
+   */
+  transition: inline-size var(--_transition);
 }
 
 .ranger__stops {
@@ -294,8 +311,15 @@
    * so the computed `background-color` interpolates when the value moves to a
    * stop of a different colour — including through the `color-mix()` the ramp
    * is sampled with between stops.
+   *
+   * `inset-inline-start` rides along for a keyboard, click-to-jump or external
+   * `v-model` move, so the thumb glides there instead of jumping (issue 17) —
+   * exempted during a live drag below, which has to track the pointer with no
+   * added latency.
    */
-  transition: background-color var(--_transition);
+  transition:
+    background-color var(--_transition),
+    inset-inline-start var(--_transition);
 }
 
 /*
@@ -374,17 +398,16 @@
   min-inline-size: var(--_touch-target);
   min-block-size: var(--_touch-target);
   /*
-   * Centred on the stop, then clamped inside the component. Without the clamp a
-   * block at either end hangs half its own width outside the Ranger, where a
-   * consumer's `overflow: hidden` cuts it off or it collides with whatever is
-   * next to it. The first and last labels sit a little inboard of their stops as
-   * the price, which is how every scale with edge labels is drawn.
+   * Centred exactly on the stop, on the same inset path the stop markers and
+   * thumb travel — not a separate, clamped position for labels. A block at
+   * either end hangs half its own width outside the Ranger as a result, which
+   * is what keeps the first and last label centred on its own stop marker
+   * rather than pulled inboard of it; a consumer whose own layout clips
+   * overflow is not this component's problem to solve.
    */
-  margin-inline-start: clamp(
-    0px,
+  margin-inline-start: calc(
     var(--_thumb-size) / 2 + var(--ranger-stop-position, 0) * (100% - var(--_thumb-size)) -
-      var(--_slice) / 2,
-    100% - var(--_slice)
+      var(--_slice) / 2
   );
   padding: 0;
   border: 0;
@@ -451,17 +474,33 @@
 }
 
 /*
- * Unset (ADR-0003): a state, not a value. The ramp is how a Ranger invites an
- * answer, so an unanswered one does not paint it — a flat track and a faded
- * thumb parked at the start, which is what makes "nobody has chosen" impossible
- * to read as "chose the first one". The fill has no colour to withhold: it
- * carries only its extent.
+ * A live pointer or touch drag has to track the pointer 1:1 with no added
+ * latency, so the position/fill glide issue 17 adds is switched off for
+ * exactly the one path it must never touch. The background-colour transition
+ * is untouched and keeps running during a drag, as it already did.
+ *
+ * `:where(.ranger[data-dragging])` rather than a bare `.ranger[data-dragging]`
+ * ancestor, so this rule stays specificity-1 like every other transition rule
+ * in the file — otherwise it would outrank the `prefers-reduced-motion` rule
+ * below on specificity rather than losing to it on source order, and a reader
+ * who asked for no motion would still get one during a drag.
  */
-.ranger[data-unset] .ranger__track {
-  background-image: none;
-  background-color: var(--_unset-track-color);
+:where(.ranger[data-dragging]) .ranger__thumb {
+  transition: background-color var(--_transition);
 }
 
+:where(.ranger[data-dragging]) .ranger__fill {
+  transition: none;
+}
+
+/*
+ * Unset (ADR-0003): a state, not a value. The ramp paints in full from the
+ * first frame regardless — a Ranger with no answer yet is not a Ranger with
+ * no colour — so the faded, untinted thumb parked at the start carries the
+ * whole of the distinction: what makes "nobody has chosen" impossible to read
+ * as "chose the first one". The fill has no colour to withhold either way: it
+ * carries only its extent.
+ */
 .ranger[data-unset] .ranger__thumb {
   opacity: var(--_unset-opacity);
 }

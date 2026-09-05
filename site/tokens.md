@@ -62,12 +62,11 @@ The dark value applies under `prefers-color-scheme: dark` — or under an explic
 
 ## States
 
-| Token                        | Default                           |
-| ---------------------------- | --------------------------------- |
-| `--ranger-unset-track-color` | the track colour above, flattened |
-| `--ranger-unset-opacity`     | `0.55`                            |
-| `--ranger-disabled-opacity`  | `0.45`                            |
-| `--ranger-transition`        | `160ms ease`                      |
+| Token                       | Default      |
+| --------------------------- | ------------ |
+| `--ranger-unset-opacity`    | `0.55`       |
+| `--ranger-disabled-opacity` | `0.45`       |
+| `--ranger-transition`       | `160ms ease` |
 
 ## Set by the component — read-only for consumers
 

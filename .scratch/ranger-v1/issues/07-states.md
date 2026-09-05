@@ -42,6 +42,11 @@ including the declaration build.
   answer. One issue-04 browser test used an unset Ranger as its colour fixture and now passes
   a value: its subject is what happens with no *colour* configured, not what an unset one
   paints.
+
+  **Superseded by issue 15**: the flat track read as a broken first paint rather than a
+  considered state, so the track now paints its ramp in full whether or not a value has been
+  chosen, and `--ranger-unset-track-color` is gone. The faded, parked thumb alone now carries
+  the distinction this decision describes.
 - **The unset thumb fades but is not hidden.** `(or hidden)` was on offer in the ticket; a
   thumb that disappears leaves nothing to drag and nothing for the focus ring to sit on.
   Faded, untinted and parked at the start is distinct enough — and it is already untinted,

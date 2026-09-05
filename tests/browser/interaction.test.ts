@@ -5,7 +5,7 @@ import { renderToString } from 'vue/server-renderer'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Ranger } from '../../src/index'
 import { blockWithIcon, blockWithLabel } from './harness'
-import { drag, moveTo, press, release, touchDrag } from './mouse'
+import { clickOn, drag, moveTo, press, release, touchDrag } from './mouse'
 
 /**
  * Issue 09's own matrix. `ranger.test.ts`, `labels.test.ts`, `states.test.ts`
@@ -193,6 +193,58 @@ describe('click on the track', () => {
 
     expect(ranger.emitted('update:modelValue')?.[0]?.[0]).toBe('wow')
     expect(ranger.attributes('data-unset')).toBeUndefined()
+  })
+})
+
+describe('disabled', () => {
+  it('never moves on a real drag, start to end, mouse or touch (issue 16)', async () => {
+    const mouse = mountBound({ stops: moods, modelValue: 'angry', disabled: true })
+    await drag(pointAt(mouse, 0), pointAt(mouse, 1))
+
+    expect(mouse.emitted('update:modelValue')).toBeUndefined()
+    expect(engineOf(mouse).value).toBe('0')
+
+    const touch = mountBound({ stops: moods, modelValue: 'angry', disabled: true })
+    await touchDrag(pointAt(touch, 0), pointAt(touch, 1))
+
+    expect(touch.emitted('update:modelValue')).toBeUndefined()
+    expect(engineOf(touch).value).toBe('0')
+  })
+
+  it('never moves on a slow drag with intermediate moves either', async () => {
+    const ranger = mountBound({ stops: moods, modelValue: 'angry', disabled: true })
+
+    await press(pointAt(ranger, 0))
+    for (const fraction of [0.25, 0.5, 0.75, 1]) await moveTo(pointAt(ranger, fraction))
+    await release(pointAt(ranger, 1))
+
+    expect(ranger.emitted('update:modelValue')).toBeUndefined()
+    expect(engineOf(ranger).value).toBe('0')
+    expect(ranger.attributes('data-dragging')).toBeUndefined()
+  })
+
+  // Re-verified alongside the drag fix, even though neither was reported
+  // broken, since both share the same `disabled` check (issue 16).
+  it('still refuses a click-to-jump on a label', async () => {
+    const ranger = mountBound({ stops: moods, modelValue: 'angry', disabled: true })
+    const label = blockWithLabel(ranger.element, 'Blush')
+
+    // A real click, rather than `userEvent.click`, which waits for its target
+    // to become clickable — and whether a disabled block ever does is exactly
+    // what this test is asking.
+    await clickOn(label)
+    await nextTick()
+
+    expect(ranger.emitted('update:modelValue')).toBeUndefined()
+    expect(engineOf(ranger).value).toBe('0')
+  })
+
+  it('still cannot be reached by the keyboard', async () => {
+    const ranger = mountBound({ stops: moods, modelValue: 'angry', disabled: true })
+    const engine = engineOf(ranger)
+
+    engine.focus()
+    expect(document.activeElement).not.toBe(engine)
   })
 })
 

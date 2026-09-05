@@ -171,12 +171,11 @@ rebuild, no `!important`, no theme class.
 
 **States**
 
-| Token                        | Default                           |
-| ---------------------------- | --------------------------------- |
-| `--ranger-unset-track-color` | the track colour above, flattened |
-| `--ranger-unset-opacity`     | `0.55`                            |
-| `--ranger-disabled-opacity`  | `0.45`                            |
-| `--ranger-transition`        | `160ms ease`                      |
+| Token                       | Default      |
+| --------------------------- | ------------ |
+| `--ranger-unset-opacity`    | `0.55`       |
+| `--ranger-disabled-opacity` | `0.45`       |
+| `--ranger-transition`       | `160ms ease` |
 
 **Set by the component, read-only for consumers**: `--ranger-position` (`0`–`1`),
 `--ranger-gradient-direction` (flipped under RTL), `--ranger-stop-position` (per stop

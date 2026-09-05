@@ -69,14 +69,16 @@ function styleOf(wrapper: ReturnType<typeof mount>, selector: string) {
 }
 
 describe('unset', () => {
-  it('does not paint the ramp, and is not the first stop either', () => {
+  it('paints the ramp from the first frame, same as a real selection (issue 15)', () => {
     const unset = mountRanger({ modelValue: null })
     const first = mountRanger({ modelValue: 'angry' })
 
-    // Both park the thumb at the start, so the track and the thumb are the
+    // The track paints identically either way; the faded, parked thumb is the
     // whole of the difference — and there has to be one (ADR-0003).
-    expect(styleOf(unset, '.ranger__track').backgroundImage).toBe('none')
-    expect(styleOf(first, '.ranger__track').backgroundImage).toContain('linear-gradient')
+    expect(styleOf(unset, '.ranger__track').backgroundImage).toContain('linear-gradient')
+    expect(styleOf(unset, '.ranger__track').backgroundImage).toBe(
+      styleOf(first, '.ranger__track').backgroundImage,
+    )
 
     expect(Number(styleOf(unset, '.ranger__thumb').opacity)).toBeLessThan(1)
     expect(styleOf(first, '.ranger__thumb').opacity).toBe('1')
@@ -84,7 +86,8 @@ describe('unset', () => {
 
   it('is not the middle stop either, which is the one that matters', () => {
     // A survey's whole point: an unanswered question must not read as a
-    // deliberate neutral answer, which is what vlider rendered.
+    // deliberate neutral answer, which is what vlider rendered. The thumb's
+    // position is what carries that now that the track no longer differs.
     const unset = mountRanger({ modelValue: null })
     const middle = mountRanger({ modelValue: 'meh' })
 
@@ -92,20 +95,6 @@ describe('unset', () => {
       wrapper.get('.ranger__thumb').element.getBoundingClientRect().x
 
     expect(thumb(unset)).not.toBeCloseTo(thumb(middle), 0)
-    expect(styleOf(unset, '.ranger__track').backgroundImage).not.toBe(
-      styleOf(middle, '.ranger__track').backgroundImage,
-    )
-  })
-
-  it('leaves the flat track to a token, so an unset Ranger is restyleable too', () => {
-    const wrapper = mount(Ranger, {
-      props: { stops: moods, modelValue: null },
-      attrs: { style: '--ranger-unset-track-color: rgb(7, 8, 9)' },
-      attachTo: document.body,
-    })
-    wrappers.push(wrapper)
-
-    expect(styleOf(wrapper, '.ranger__track').backgroundColor).toBe('rgb(7, 8, 9)')
   })
 })
 

@@ -192,7 +192,7 @@ Public API; renaming one is a breaking change (ADR-0004).
 
 **Colour** `--ranger-surface` `--ranger-track-color` `--ranger-gradient` `--ranger-thumb-color` `--ranger-thumb-border-color` `--ranger-label-color` `--ranger-label-color-selected` `--ranger-focus-color`
 
-**States** `--ranger-unset-track-color` `--ranger-unset-opacity` `--ranger-disabled-opacity` `--ranger-transition`
+**States** `--ranger-unset-opacity` `--ranger-disabled-opacity` `--ranger-transition`
 
 **Set by the component, read-only for consumers** `--ranger-position` (0–1) `--ranger-gradient-direction` (set by the stylesheet, flipped under RTL) `--ranger-stop-position` (0–1, per stop marker) `--ranger-stop-count` `--ranger-active-color`
 

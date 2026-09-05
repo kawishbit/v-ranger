@@ -41,6 +41,15 @@ function thumbCentre(root: Element) {
 }
 
 /**
+ * Past the `--_transition` default of `160ms` (issue 17): every non-drag move
+ * now glides there instead of landing instantly, so a claim about where the
+ * thumb *ends up* has to wait for the glide to finish first.
+ */
+function settle(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 200))
+}
+
+/**
  * Where a position should land in pixels. The travel is inset by half a thumb
  * at each end, the same mapping a native range input uses, so the visible thumb
  * stays with the pointer instead of running ahead of it at the extremes.
@@ -84,6 +93,7 @@ describe('the engine in a real browser', () => {
     engine.focus()
     await userEvent.keyboard('{ArrowRight}')
     await ranger.setProps({ modelValue: 'meh' })
+    await settle()
 
     // Nothing here told the thumb to move: the engine moved, the value it
     // emitted came back as a prop, and the presentation layer followed.
@@ -97,6 +107,7 @@ describe('the engine in a real browser', () => {
 
     for (const [index, stop] of moods.entries()) {
       await ranger.setProps({ modelValue: stop.value })
+      await settle()
 
       const position = index / (moods.length - 1)
       expect(thumbCentre(ranger.element)).toBeCloseTo(expectedCentre(ranger.element, position), 0)
@@ -230,8 +241,6 @@ describe('colour in a real browser', () => {
   }
 
   it('paints the six-stop mood ramp with no colour configured at all', () => {
-    // A value, because an unset Ranger paints no ramp at all (issue 07) — the
-    // subject here is what happens with no *colour* configured.
     const ranger = mountRanger({ stops: moods, modelValue: 'angry' })
     const ramp = trackRamp(ranger.element)
 

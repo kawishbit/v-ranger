@@ -18,7 +18,7 @@ Second, vlider initialised its internal value to `null` and handed it to a nativ
 **`null` is a first-class unset state.** When `modelValue` is `null`:
 
 - No stop is the selected stop.
-- The presentation layer renders a visually distinct unset appearance (desaturated track, no fill, thumb parked at the start or hidden), driven by `--ranger-unset-*` tokens, exposed as `data-unset` on the root for state-based styling, and overridable through the `thumb` slot.
+- The presentation layer renders a visually distinct unset appearance (no fill, thumb faded and parked at the start), driven by `--ranger-unset-*` tokens, exposed as `data-unset` on the root for state-based styling, and overridable through the `thumb` slot. The track paints its ramp in full regardless — see issue 15 — so the thumb alone carries the distinction.
 - The component emits **only** in response to real user interaction — never on mount, and never as a side effect of rendering.
 - `aria-valuetext` announces that nothing is selected rather than announcing a number.
 
