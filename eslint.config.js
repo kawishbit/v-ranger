@@ -8,7 +8,7 @@ export default ts.config(
   {
     // `type-tests/` is fixtures for `vue-tsc`, not source; `bad.vue` fails on
     // purpose.
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'type-tests/**'],
+    ignores: ['dist/**', 'playground-dist/**', 'coverage/**', 'node_modules/**', 'type-tests/**'],
   },
   js.configs.recommended,
   ts.configs.recommended,
