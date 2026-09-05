@@ -5,13 +5,13 @@
   "type": "module",
   "license": "MIT",
   "author": "Kawish B",
-  "homepage": "https://ranger.kawishbit.com",
+  "homepage": "https://v-ranger.kawishbit.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kawishbit/ranger.git"
+    "url": "git+https://github.com/kawishbit/v-ranger.git"
   },
   "bugs": {
-    "url": "https://github.com/kawishbit/ranger/issues"
+    "url": "https://github.com/kawishbit/v-ranger/issues"
   },
   "keywords": [
     "vue",

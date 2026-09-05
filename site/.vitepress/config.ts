@@ -27,7 +27,7 @@ export default defineConfig({
       { text: 'Quickstart', link: '/quickstart' },
       { text: 'Playground', link: '/playground' },
       { text: 'Tokens', link: '/tokens' },
-      { text: 'GitHub', link: 'https://github.com/kawishbit/ranger' },
+      { text: 'GitHub', link: 'https://github.com/kawishbit/v-ranger' },
     ],
 
     sidebar: [
@@ -56,7 +56,7 @@ export default defineConfig({
       },
     ],
 
-    socialLinks: [{ icon: 'github', link: 'https://github.com/kawishbit/ranger' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/kawishbit/v-ranger' }],
 
     search: { provider: 'local' },
   },
