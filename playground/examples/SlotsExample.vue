@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Ranger } from '../../src/index'
+import ExampleCard from '../ExampleCard.vue'
 import { moods } from '../data'
 </script>
 
 <template>
-  <section>
+  <ExampleCard theme="light" background="#d1fae5">
     <h2>Slots</h2>
     <p><code>#label</code> and <code>#icon</code> replace only their own part</p>
     <Ranger :stops="moods" aria-label="Label and icon slots">
@@ -29,5 +30,5 @@ import { moods } from '../data'
         <span style="font-size: 0.5rem">{{ unset ? '?' : '' }}</span>
       </template>
     </Ranger>
-  </section>
+  </ExampleCard>
 </template>

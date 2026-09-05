@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Ranger } from '../../src/index'
+import ExampleCard from '../ExampleCard.vue'
 import { useLastCommit } from '../useLastCommit'
 
 const score = ref<number | null>(null)
@@ -8,7 +9,7 @@ const { lastCommit, record } = useLastCommit<number | null>()
 </script>
 
 <template>
-  <section>
+  <ExampleCard theme="light" background="#dbeafe">
     <h2>Numeric axis</h2>
     <Ranger
       v-model="score"
@@ -23,5 +24,5 @@ const { lastCommit, record } = useLastCommit<number | null>()
       <code>{{ score ?? 'unset' }}</code>
     </p>
     <pre>{{ lastCommit }}</pre>
-  </section>
+  </ExampleCard>
 </template>

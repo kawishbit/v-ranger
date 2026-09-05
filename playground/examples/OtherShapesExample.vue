@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Ranger } from '../../src/index'
+import ExampleCard from '../ExampleCard.vue'
 import { moods, vliderStops } from '../data'
 </script>
 
 <template>
-  <section>
+  <ExampleCard theme="light" background="#fce7f3">
     <h2>The other two shapes, and per-stop colour</h2>
     <p><code>:gradient="['#0ea5e9', '#22c55e']"</code></p>
     <Ranger :stops="moods" :gradient="['#0ea5e9', '#22c55e']" aria-label="A list of colours" />
@@ -18,5 +19,5 @@ import { moods, vliderStops } from '../data'
 
     <p><code>stop.color</code> on every stop — vlider's own ramp</p>
     <Ranger :stops="vliderStops" aria-label="Per-stop colour" />
-  </section>
+  </ExampleCard>
 </template>
