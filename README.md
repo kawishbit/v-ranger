@@ -225,18 +225,14 @@ export default defineNuxtConfig({
 | Per-item `extras`          | Whatever else you put on the stop object itself                                                 |
 | `#bullet` slot             | `#stop` slot (scope: `{ stop, index, selected, disabled, position }`)                           |
 
-## Documentation site
+## Playground
 
-The full docs — a live prop playground, per-page recipes, accessibility notes, and the
-vlider migration guide — live in `site/` (VitePress) and deploy to
-[ranger.kawishbit.com](https://ranger.kawishbit.com) from `vercel.json` at the repo root
-on every push to `main`. **Connecting that Vercel project to this repo, and pointing
-`ranger.kawishbit.com`'s DNS at it, is a one-time human step** — nothing in this repo
-can do either. Locally:
+Every prop, slot and gradient preset demonstrated live in `playground/`, deployed from
+`vercel.json` at the repo root on every push to `main`. **Connecting that Vercel project
+to this repo is a one-time human step** — nothing in this repo can do that itself.
+Locally:
 
 ```sh
-cd site
-npm install
 npm run dev
 ```
 

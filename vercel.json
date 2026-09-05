@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm install --prefix site && npm run build --prefix site",
-  "outputDirectory": "site/.vitepress/dist",
+  "buildCommand": "npm run build:playground",
+  "outputDirectory": "playground-dist",
   "cleanUrls": true,
   "trailingSlash": false
 }

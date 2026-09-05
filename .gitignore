@@ -142,5 +142,8 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
+# Playground production build (scripts/build.mjs's own `dist/` is separate)
+playground-dist/
+
 # Vitest browser-mode attachments (failure screenshots)
 .vitest/
