@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SpeedInsights } from '@vercel/speed-insights/vue'
 import GradientPresetsExample from './examples/GradientPresetsExample.vue'
 import LabelsIconsExample from './examples/LabelsIconsExample.vue'
 import NumericAxisExample from './examples/NumericAxisExample.vue'
@@ -13,6 +14,7 @@ import UncontrolledExample from './examples/UncontrolledExample.vue'
 </script>
 
 <template>
+  <SpeedInsights />
   <main>
     <h1>ranger — dev playground</h1>
 
