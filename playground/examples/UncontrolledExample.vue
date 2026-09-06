@@ -19,6 +19,7 @@ const letter = ref('a')
           { value: 'a', label: 'A' },
           { value: 'b', label: 'B', disabled: true },
           { value: 'c', label: 'C' },
+          { value: 'D', label: 'D' },
         ]"
         aria-label="Letters"
       />

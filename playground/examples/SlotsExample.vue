@@ -27,15 +27,17 @@ const stopThumbSlots = ref('wow')
     </Ranger>
 
     <p><code>#stop</code> replaces the whole block, and <code>#thumb</code> fills the thumb</p>
-    <Ranger v-model="stopThumbSlots" :stops="moods" aria-label="Stop and thumb slots">
-      <template #stop="{ stop, selected, disabled }">
-        <span :style="{ opacity: disabled ? 0.4 : 1, fontWeight: selected ? 700 : 400 }">
-          {{ stop.icon }} {{ stop.label }}
-        </span>
-      </template>
-      <template #thumb="{ unset }">
-        <span style="font-size: 0.5rem">{{ unset ? '?' : '' }}</span>
-      </template>
-    </Ranger>
+    <div style="display: flex; padding: 0 20px">
+      <Ranger v-model="stopThumbSlots" :stops="moods" aria-label="Stop and thumb slots">
+        <template #stop="{ stop, selected, disabled }">
+          <span :style="{ opacity: disabled ? 0.4 : 1, fontWeight: selected ? 700 : 400 }">
+            {{ stop.icon }} {{ stop.label }}
+          </span>
+        </template>
+        <template #thumb="{ unset }">
+          <span style="font-size: 0.5rem">{{ unset ? '?' : '' }}</span>
+        </template>
+      </Ranger>
+    </div>
   </ExampleCard>
 </template>
