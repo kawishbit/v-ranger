@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="v-ranger — a colourful, emotive range slider for Vue 3, shown along the mood gradient with the thumb resting on Astonished">
+</p>
+
+<p align="center">
+  <a href="https://v-ranger.kawishbit.com">Live playground</a> ·
+  <a href="https://www.npmjs.com/package/v-ranger">npm</a> ·
+  <a href="#install">Install</a>
+</p>
+
 # v-ranger
 
 A colourful, emotive Ranger for Vue 3, with a gradient-track, labelled, emoji-iconed look —
@@ -215,10 +225,11 @@ export default defineNuxtConfig({
 
 ## Playground
 
-Every prop, slot and gradient preset demonstrated live in `playground/`, deployed from
-`vercel.json` at the repo root on every push to `main`. **Connecting that Vercel project
-to this repo is a one-time human step** — nothing in this repo can do that itself.
-Locally:
+Every prop, slot and gradient preset demonstrated live at
+**[v-ranger.kawishbit.com](https://v-ranger.kawishbit.com)**, built from `playground/` and
+deployed from `vercel.json` at the repo root on every push to `main`. **Connecting that
+Vercel project to this repo is a one-time human step** — nothing in this repo can do that
+itself. Locally:
 
 ```sh
 npm run dev
