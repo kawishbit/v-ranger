@@ -46,3 +46,12 @@ now-unused global `pre { ... }` rule in `App.vue` was removed.
 
 `npm run typecheck`, `npm run lint`, `npm run format:check`, and the full unit suite are
 clean.
+
+**Follow-up fix:** a user reported `lastCommit` staying "nothing committed yet" after
+dragging the Ordinal/Numeric Axis sliders. Root cause: `CodeBlock.vue`'s `watchEffect`
+read `props.code` *after* `await highlighter()` — `watchEffect` only tracks reactive reads
+made synchronously, before an async callback's first `await`, so `props.code` was never
+registered as a dependency and later changes to `lastCommit` never re-triggered the
+highlight. Fixed by capturing `props.code`/`props.lang` into local variables before the
+`await`. Reproduced the bug by temporarily reverting the fix and confirming `lastCommit`'s
+rendered text stayed frozen after a real drag, then confirmed the fix updates it.

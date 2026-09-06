@@ -9,8 +9,15 @@ const props = withDefaults(defineProps<{ code: string; lang?: 'vue' | 'json' }>(
 const html = ref('')
 
 watchEffect(async () => {
+  // Read before the `await`: `watchEffect` only tracks reactive reads made
+  // synchronously, before the first await, so `props.code` has to be
+  // captured here or a later change to it (e.g. `lastCommit` updating after
+  // a drag commits) would never re-trigger this effect.
+  const code = props.code.trim()
+  const lang = props.lang
+
   const shiki = await highlighter()
-  html.value = shiki.codeToHtml(props.code.trim(), { lang: props.lang, theme: THEME })
+  html.value = shiki.codeToHtml(code, { lang, theme: THEME })
 })
 </script>
 
