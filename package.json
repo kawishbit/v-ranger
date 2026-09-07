@@ -1,6 +1,6 @@
 {
   "name": "v-ranger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A colourful, emotive range slider for Vue 3.",
   "type": "module",
   "license": "MIT",
